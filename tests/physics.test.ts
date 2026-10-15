@@ -1,0 +1,11 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { Vector3, Box3 } from 'three';
+import { Physics, Navigation } from '../src/physics';
+const body=(x=0,y=0,z=0)=>({pos:new Vector3(x,y,z),vel:new Vector3(),grounded:true});
+test('ray distance orders world occlusion and detects starting inside cover',()=>{const p=new Physics();p.addBox(0,1,-5,4,2,1);assert.equal(p.ray(new Vector3(0,1,0),new Vector3(0,0,-1)),4.5);assert.equal(p.ray(new Vector3(0,1,-5),new Vector3(0,0,-1)),0);assert.equal(p.ray(new Vector3(5,1,0),new Vector3(0,0,-1),20),20);});
+test('grounded body slides along wall without crossing',()=>{const p=new Physics();p.addBox(0,-.2,0,20,.4,20);p.addBox(2,1,0,1,2,10);const b=body();for(let i=0;i<120;i++){b.vel.set(5,0,-2);p.move(b,1/120);}assert.ok(b.pos.x<1.5);assert.ok(b.pos.z<-1.8);assert.equal(b.pos.y,0);});
+test('jump respects ceilings and returns to floor',()=>{const p=new Physics();p.addBox(0,-.2,0,20,.4,20);p.addBox(0,2.5,0,4,.3,4);const b=body();b.vel.y=7;b.grounded=false;let peak=0;for(let i=0;i<180;i++){p.move(b,1/120);peak=Math.max(peak,b.pos.y);}assert.ok(peak<=.601);assert.equal(b.pos.y,0);assert.ok(b.grounded);});
+test('ramp ascends and descends continuously',()=>{const p=new Physics();p.addBox(0,-.2,0,20,.4,30);p.ramps.push({x1:-2,x2:2,z1:0,z2:12,low:0,high:4});const b=body(0,0,12);for(let i=0;i<360;i++){b.vel.z=-4;p.move(b,1/120);}assert.ok(b.pos.y>3.9);for(let i=0;i<360;i++){b.vel.z=4;p.move(b,1/120);}assert.ok(b.pos.y<.1);});
+test('navigation validates edges and routes around obstacle',()=>{const p=new Physics();p.addBox(0,-.2,0,15,.4,15);p.surfaces.push({x1:-7,x2:7,z1:-7,z2:7,y:0});p.addBox(0,1,0,2,2,5);const n=new Navigation(p),path=n.path(new Vector3(-5,0,0),new Vector3(5,0,0));assert.ok(path.length>5);for(let i=1;i<path.length;i++)assert.ok(p.traversable(path[i-1],path[i]));assert.ok(path.some(v=>Math.abs(v.z)>2.5));});
+test('ray misses parallel outside slab',()=>{const box=new Box3(new Vector3(-1,0,-2),new Vector3(1,2,-1));const p=new Physics();p.boxes.push(box);assert.equal(p.ray(new Vector3(5,1,0),new Vector3(0,0,-1),10),10);});
