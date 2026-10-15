@@ -1,9 +1,11 @@
 export const CONFIG = {
-  matchSeconds: 300, respawnSeconds: 3, protectionSeconds: 2,
-  power: { on: 60, warning: 5, blackout: 20 },
-  player: { radius: .32, height: 1.75, eye: 1.57, speed: 5.2, sprint: 8, jump: 7, gravity: 21, acceleration: 28, braking: 22 },
-  scanner: { cooldown: 20, duration: 1.5, radius: 30 },
-  bots: { easy: { reaction: .65, spread: .095, sight: 30, speed: 3.1 }, normal: { reaction: .38, spread: .06, sight: 37, speed: 3.7 } },
+  matchSeconds: 480, targetScore: 40, maxHealth: 100, respawnSeconds: 3, protectionSeconds: 2,
+  reloadEvents: { remove: .2, insert: .68, bolt: .84 },
+  healing: { delay: 5, perSecond: 5 },
+  intel: { pingSeconds: 1.5, audibleRadius: 34 },
+  view: { fov: 80, adsFov: 62, adsSensitivity: .6, adsSpeed: .62, transition: 12, switchSeconds: .24 },
+  player: { radius: .32, height: 1.75, eye: 1.57, crouchHeight: 1.12, crouchEye: .98, crouchSpeed: .55, speed: 5.2, sprint: 8, jump: 7, gravity: 21, acceleration: 28, braking: 22 },
+  bots: { easy: { reaction: .65, spread: .09, sight: 35, speed: 3.2, aggression: .5 }, normal: { reaction: .38, spread: .052, sight: 40, speed: 3.7, aggression: .78 } },
   weapons: {
     rifle: { name: 'AK / 47', mag: 30, reserve: 120, damage: 25, head: 50, interval: .1, reload: 2.2, range: 100, spread: .006 },
     pistol: { name: 'M / 12', mag: 12, reserve: 60, damage: 20, head: 40, interval: .25, reload: 1.4, range: 70, spread: .002 },
