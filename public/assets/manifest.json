@@ -1,0 +1,161 @@
+{
+  "licenseVerified": "2026-10-16",
+  "assets": [
+    {
+      "id": "stone_wall_02",
+      "source": "https://polyhaven.com/a/stone_wall_02",
+      "creator": {
+        "Dario Barresi": "Processing",
+        "Charlotte Baglioni": "Photography"
+      },
+      "license": "CC0-1.0",
+      "licenseSource": "https://polyhaven.com/license",
+      "dimensionsMM": [
+        2000,
+        2000
+      ],
+      "modifications": "1K JPEG source maps; runtime tiled and tinted; OpenGL normals.",
+      "files": [
+        {
+          "path": "assets/materials/stone_wall_02_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_wall_02/stone_wall_02_diff_1k.jpg",
+          "sha256": "546c51130575b57db1c9690766c55df19e80bf122bd3630f25f82f2832998fa8"
+        },
+        {
+          "path": "assets/materials/stone_wall_02_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_wall_02/stone_wall_02_nor_gl_1k.jpg",
+          "sha256": "47c4ee16834a755da49feafe920161db2fd5147be97dd9d24f3b659d9b462c1e"
+        },
+        {
+          "path": "assets/materials/stone_wall_02_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_wall_02/stone_wall_02_rough_1k.jpg",
+          "sha256": "b857cb67f7dd2c439f8e6d31ef3e279fa18ae2cec66b320382d03a83593178e5"
+        }
+      ]
+    },
+    {
+      "id": "wood_planks_dirt",
+      "source": "https://polyhaven.com/a/wood_planks_dirt",
+      "creator": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseSource": "https://polyhaven.com/license",
+      "dimensionsMM": [
+        2000,
+        2000
+      ],
+      "modifications": "1K JPEG source maps; runtime tiled and tinted; OpenGL normals.",
+      "files": [
+        {
+          "path": "assets/materials/wood_planks_dirt_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks_dirt/wood_planks_dirt_diff_1k.jpg",
+          "sha256": "230bb4aabaebde24ead3ae593a48f8f45e93705aaf3cfdc438589bb49c2a7af3"
+        },
+        {
+          "path": "assets/materials/wood_planks_dirt_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks_dirt/wood_planks_dirt_nor_gl_1k.jpg",
+          "sha256": "877bf561c0bc83a583238c5133c221026ff25052f8f567174c6b285af4b74f0e"
+        },
+        {
+          "path": "assets/materials/wood_planks_dirt_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks_dirt/wood_planks_dirt_rough_1k.jpg",
+          "sha256": "f9b706729bb727d3eeab4794f18d3c4df43760d580342bf28fe8f3f09a68c5e9"
+        }
+      ]
+    },
+    {
+      "id": "brown_mud_dry",
+      "source": "https://polyhaven.com/a/brown_mud_dry",
+      "creator": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseSource": "https://polyhaven.com/license",
+      "dimensionsMM": [
+        1299.996018409729,
+        1299.996018409729
+      ],
+      "modifications": "1K JPEG source maps; runtime tiled and tinted; OpenGL normals.",
+      "files": [
+        {
+          "path": "assets/materials/brown_mud_dry_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_dry/brown_mud_dry_diff_1k.jpg",
+          "sha256": "a56281b644de614787340f3db45e28d2f72ec32fc19a442f99002bae0ab11398"
+        },
+        {
+          "path": "assets/materials/brown_mud_dry_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_dry/brown_mud_dry_nor_gl_1k.jpg",
+          "sha256": "4dd82ecb3e810d4de49d34c7d6cc30152129434a58b3bd786bc9952bc8874877"
+        },
+        {
+          "path": "assets/materials/brown_mud_dry_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_dry/brown_mud_dry_rough_1k.jpg",
+          "sha256": "31fb99629f533924b1150a7dac8d9432de85450bb45cda5033e3eb723f8dda04"
+        }
+      ]
+    },
+    {
+      "id": "rusty_metal",
+      "source": "https://polyhaven.com/a/rusty_metal",
+      "creator": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseSource": "https://polyhaven.com/license",
+      "dimensionsMM": [
+        1500,
+        1500
+      ],
+      "modifications": "1K JPEG source maps; runtime tiled and tinted; OpenGL normals.",
+      "files": [
+        {
+          "path": "assets/materials/rusty_metal_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal/rusty_metal_diff_1k.jpg",
+          "sha256": "b532f22a08a9c36b5adf785373e213cd635a2d3769cb61196bbf5404cce7cd43"
+        },
+        {
+          "path": "assets/materials/rusty_metal_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal/rusty_metal_nor_gl_1k.jpg",
+          "sha256": "cf7c8d72c7b5e1923321762d47f91d59b5233cb5b3c456823c54a2403109ff6a"
+        },
+        {
+          "path": "assets/materials/rusty_metal_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal/rusty_metal_rough_1k.jpg",
+          "sha256": "a1b382605b896f2ef591e58527747d3ea7f3f73b8c24d3cdd934dcd4111edfe7"
+        }
+      ]
+    },
+    {
+      "id": "grey_plaster_03",
+      "source": "https://polyhaven.com/a/grey_plaster_03",
+      "creator": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseSource": "https://polyhaven.com/license",
+      "dimensionsMM": [
+        1000,
+        1000
+      ],
+      "modifications": "1K source maps, runtime tiling and paint tint.",
+      "files": [
+        {
+          "path": "assets/materials/grey_plaster_03_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster_03/grey_plaster_03_diff_1k.jpg",
+          "sha256": "b0952ccabee3f68a1962684a8bc2fe64101b92e569cfd13cf1d8c11b65f395d9"
+        },
+        {
+          "path": "assets/materials/grey_plaster_03_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster_03/grey_plaster_03_nor_gl_1k.jpg",
+          "sha256": "801b002ad7a8872cc998080f9a0345b68e49708c09570050e09e1e0fb3af161d"
+        },
+        {
+          "path": "assets/materials/grey_plaster_03_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster_03/grey_plaster_03_rough_1k.jpg",
+          "sha256": "6d51b445ed36d27887db7d0c5db23d6ef6aa3c1f49e7c65878ee80c66353c2ee"
+        }
+      ]
+    }
+  ]
+}

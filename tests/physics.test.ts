@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Vector3, Box3 } from 'three';
-import { Physics, Navigation } from '../src/physics';
+import { Physics, Navigation, bodyEye } from '../src/physics';
 const body=(x=0,y=0,z=0)=>({pos:new Vector3(x,y,z),vel:new Vector3(),grounded:true});
 test('ray distance orders world occlusion and detects starting inside cover',()=>{const p=new Physics();p.addBox(0,1,-5,4,2,1);assert.equal(p.ray(new Vector3(0,1,0),new Vector3(0,0,-1)),4.5);assert.equal(p.ray(new Vector3(0,1,-5),new Vector3(0,0,-1)),0);assert.equal(p.ray(new Vector3(5,1,0),new Vector3(0,0,-1),20),20);});
 test('grounded body slides along wall without crossing',()=>{const p=new Physics();p.addBox(0,-.2,0,20,.4,20);p.addBox(2,1,0,1,2,10);const b=body();for(let i=0;i<120;i++){b.vel.set(5,0,-2);p.move(b,1/120);}assert.ok(b.pos.x<1.5);assert.ok(b.pos.z<-1.8);assert.equal(b.pos.y,0);});
@@ -10,3 +10,11 @@ test('ramp ascends and descends continuously',()=>{const p=new Physics();p.addBo
 test('navigation validates edges and routes around obstacle',()=>{const p=new Physics();p.addBox(0,-.2,0,15,.4,15);p.surfaces.push({x1:-7,x2:7,z1:-7,z2:7,y:0});p.addBox(0,1,0,2,2,5);const n=new Navigation(p),path=n.path(new Vector3(-5,0,0),new Vector3(5,0,0));assert.ok(path.length>5);for(let i=1;i<path.length;i++)assert.ok(p.traversable(path[i-1],path[i]));assert.ok(path.some(v=>Math.abs(v.z)>2.5));});
 test('ray misses parallel outside slab',()=>{const box=new Box3(new Vector3(-1,0,-2),new Vector3(1,2,-1));const p=new Physics();p.boxes.push(box);assert.equal(p.ray(new Vector3(5,1,0),new Vector3(0,0,-1),10),10);});
 test('crouch collision clears low ceiling while standing remains blocked',()=>{const p=new Physics();p.addBox(0,-.2,0,20,.4,20);p.addBox(0,1.5,0,3,.2,3);assert.ok(p.blocked(0,0,0,.32,1.75));assert.ok(!p.blocked(0,0,0,.32,1.12));const b={...body(),height:1.12};b.vel.z=3;for(let i=0;i<60;i++)p.move(b,1/120);assert.ok(b.pos.z>1);});
+test('balcony ramp side rejects the reproduced ground-level wedge intrusion',()=>{const p=new Physics();p.addBox(0,-.18,0,60,.36,50);p.ramps.push({x1:-16.5,x2:-13.5,z1:4,z2:13,low:0,high:2.7});assert.ok(p.blocked(-16.5,0,4.5));const b=body(-17.5,0,4.5);for(let i=0;i<240;i++){b.vel.x=5;p.move(b,1/120);}assert.ok(b.pos.x<=-16.82);assert.equal(b.pos.y,0);assert.ok(!p.spawnPosition(new Vector3(-16.5,0,4.5)));});
+test('large deltas and high falling speed cannot tunnel through thin floors or walls',()=>{const p=new Physics();p.addBox(0,-.05,0,20,.1,20);p.addBox(2,1,0,.1,2,20);const b=body(0,8,0);b.grounded=false;b.vel.set(0,-150,0);p.move(b,.5);assert.equal(b.pos.y,0);assert.ok(b.grounded);b.vel.set(90,0,0);p.move(b,.5);assert.ok(b.pos.x<1.64);});
+test('spawn validation checks support footprint and full headroom',()=>{const p=new Physics();p.addBox(0,-.18,0,4,.36,4);assert.ok(p.spawnPosition(new Vector3(0,0,0)));assert.equal(p.spawnPosition(new Vector3(1.9,0,0)),null);p.addBox(0,1.5,0,1,.2,1);assert.equal(p.spawnPosition(new Vector3()),null);assert.ok(p.supported(new Vector3(),1.12));});
+test('adjoining surfaces keep feet supported in both directions',()=>{const p=new Physics();p.addBox(-2,-.18,0,4,.36,4);p.addBox(2,-.165,0,4,.36,4);const b=body(-3,0,0);for(let i=0;i<180;i++){b.vel.x=4;p.move(b,1/120);assert.ok(b.pos.y>=0&&b.pos.y<=.016);assert.ok(b.grounded);}});
+
+test('camera eye stays inside standing and crouched collision body, never below feet',()=>{for(const height of [1.12,1.75])for(const current of [-.03,.98,1.57]){const eye=bodyEye(height,height<1.5,current,1/120);assert.ok(eye>=.2&&eye<=height-.12);}});
+
+test('non-finite body state exits simulation for environmental death instead of hanging substeps',()=>{const p=new Physics(),b=body();b.vel.x=Infinity;p.move(b,1/120);assert.equal(b.pos.y,-100);assert.equal(b.vel.length(),0);});

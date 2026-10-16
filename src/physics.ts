@@ -4,6 +4,10 @@ export type Ramp = { x1: number; x2: number; z1: number; z2: number; low: number
 export type Surface = { x1: number; x2: number; z1: number; z2: number; y: number };
 export type Body = { pos: Vector3; vel: Vector3; grounded: boolean; height?:number };
 const AXES=['x','y','z'] as const;
+export function bodyEye(height:number,crouched:boolean,current:number,dt:number) {
+  const target=crouched?CONFIG.player.crouchEye:CONFIG.player.eye;
+  return Math.max(.2,Math.min(height-.12,current+(target-current)*(1-Math.exp(-14*dt))));
+}
 export class Physics {
   private rampBounds=new WeakMap<Ramp,Box3>();
   boxes: Box3[] = []; ramps: Ramp[] = []; surfaces: Surface[] = [];
@@ -11,8 +15,30 @@ export class Physics {
   rampY(r: Ramp, z: number) { const t = Math.max(0, Math.min(1, (z-r.z1)/(r.z2-r.z1))); return r.low + (r.high-r.low) * (r.reverse ? t : 1-t); }
   inRect(x: number,z: number,r: {x1:number;x2:number;z1:number;z2:number}, pad=0) { return x >= r.x1-pad && x <= r.x2+pad && z >= r.z1-pad && z <= r.z2+pad; }
   floor(x:number,z:number, maxY:number, radius=0) { let y=-100; for (const b of this.boxes) if (x+radius >= b.min.x && x-radius <= b.max.x && z+radius >= b.min.z && z-radius <= b.max.z && b.max.y <= maxY+.38) y=Math.max(y,b.max.y); for(const r of this.ramps) if(this.inRect(x,z,r) && this.rampY(r,z)<=maxY+.4) y=Math.max(y,this.rampY(r,z)); return y; }
-  blocked(x:number,y:number,z:number,radius:number=CONFIG.player.radius,height:number=CONFIG.player.height) { for (const b of this.boxes) if(y+height>b.min.y+.015 && y<b.max.y-.32 && x+radius>b.min.x && x-radius<b.max.x && z+radius>b.min.z && z-radius<b.max.z) return true; for(const r of this.ramps) if(this.inRect(x,z,r,-.01) && y+height>r.low+.05 && this.rampY(r,z)>y+.4) return true; return false; }
+  blocked(x:number,y:number,z:number,radius:number=CONFIG.player.radius,height:number=CONFIG.player.height) { for (const b of this.boxes) if(y+height>b.min.y+.015 && y<b.max.y-.32 && x+radius>b.min.x && x-radius<b.max.x && z+radius>b.min.z && z-radius<b.max.z) return true; for(const r of this.ramps) if(this.inRect(x,z,r,radius-.001) && y+height>r.low-.2+.015 && this.rampY(r,Math.max(r.z1,Math.min(r.z2,z)))>y+.4) return true; return false; }
+  supported(pos:Vector3,height:number=CONFIG.player.height) {
+    if(!Number.isFinite(pos.x+pos.y+pos.z))return false;
+    const r=CONFIG.player.radius*.8;
+    for(const [dx,dz] of [[0,0],[r,0],[-r,0],[0,r],[0,-r]])if(Math.abs(this.floor(pos.x+dx,pos.z+dz,pos.y)-pos.y)>.13)return false;
+    return this.clearance(pos,height);
+  }
+  clearance(pos:Vector3,height:number) {
+    const r=CONFIG.player.radius;
+    for(const b of this.boxes)if(pos.y+height>b.min.y+.015&&pos.y<b.max.y-.025&&pos.x+r>b.min.x&&pos.x-r<b.max.x&&pos.z+r>b.min.z&&pos.z-r<b.max.z)return false;
+    return !this.blocked(pos.x,pos.y,pos.z,r,height);
+  }
+  spawnPosition(candidate:Vector3) {
+    const y=this.floor(candidate.x,candidate.z,candidate.y+.1);
+    const p=new Vector3(candidate.x,y,candidate.z);
+    return Math.abs(y-candidate.y)<.4&&this.supported(p)?p:null;
+  }
   move(body:Body, dt:number) {
+    if(!Number.isFinite(body.pos.lengthSq()+body.vel.lengthSq())){body.pos.y=-100;body.vel.set(0,0,0);body.grounded=false;return;}
+    // Also guard callers outside the main fixed-step loop (stalls / test / tools).
+    let remaining=Math.min(.5,Math.max(0,dt));
+    while(remaining>1e-8){const speed=Math.max(1,Math.abs(body.vel.x),Math.abs(body.vel.y),Math.abs(body.vel.z));const step=Math.min(remaining,1/120,.12/speed);this.moveStep(body,step);remaining-=step;}
+  }
+  private moveStep(body:Body, dt:number) {
     const {pos,vel}=body; const radius=CONFIG.player.radius, height=body.height??CONFIG.player.height;
     // Small fixed simulation steps bound travel and make axis sliding stable.
     const oldY=pos.y;

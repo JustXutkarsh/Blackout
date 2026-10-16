@@ -1,6 +1,6 @@
 # BLACKOUT: Mountain Turf — Version 2
 
-An offline 4v4 team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Original procedural models, signs, mountains and audio are bundled locally. No backend, accounts, keys, networking or remote gameplay assets. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
+An offline 4v4 team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Original articulated models, signs, mountains and audio are combined with locally bundled CC0 PBR materials. No backend, accounts, keys, networking or remote gameplay assets. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
 
 ## Run
 
@@ -37,6 +37,7 @@ npm test
 | M | Toggle north-up full map while retaining mouse capture |
 | Hold Tab | Team scoreboard; releasing Tab closes it |
 | Escape | Close overlay first, otherwise pause / release mouse |
+| F3 (development only) | Collision / feet / camera diagnostic view |
 
 Opening/closing tactical overlays clears held controls and suppresses attacks. The match continues while the locked map or scoreboard is open. Mouse look is held still in overlays. Browsers can intercept physical Escape to release pointer lock regardless of page code; loss of capture always pauses, and resuming requires a click.
 
@@ -56,7 +57,7 @@ When paused, click the minimap to open an interactive map. Its close button retu
 
 ## Reloads and first-person animation
 
-Both procedural hands/forearms move with the weapon. Idle, walk, sprint, switch, fire, knife, ADS and reload poses use the active simulation clock. ADS reduces FOV, sensitivity, movement speed and spread; the front sights align to the camera's shot direction. Crouching changes collision height immediately and smoothly changes camera height.
+Both procedural hands/forearms move with the weapon. Idle, walk, sprint, switch, fire, knife, ADS and reload poses use the active simulation clock. ADS reduces FOV, sensitivity, movement speed and spread; the front sights align to the camera's shot direction. Crouching changes collision height immediately and interpolates eye height within that body; the camera never uses a feet-level obstruction ray. Forearms remain sleeved/gloved. Characters have articulated hips/knees, aiming arms, distance-driven gait, breathing, shot recoil and a brief death collapse; these remain stylized procedural models.
 
 Reload progress is authoritative in `WeaponState`: removal at 20%, insertion/ammo transfer at 68%, and bolt/slide motion at 84% for empty reloads. Ammo is transferred once at insertion. Switching before insertion consumes no reserve; switching afterward keeps the transferred ammunition. Either switch cancels remaining animation. Death cancels safely; pause freezes it. Per-weapon cooldowns persist through switching, with an additional global switch lock. Holding automatic fire resumes only after reload and switch locks finish. Tactical reloads omit the empty bolt action.
 
@@ -79,6 +80,8 @@ Bots use line of sight, reaction delays, imperfect aim, finite magazines/reserve
 | `src/rules.ts` | Pure ammunition, damage, healing, life timers, team scores/counts and results |
 | `src/physics.ts` | Bounded fixed-step collision, crouch dimensions, ramps, world ray tests and A* navigation |
 | `src/world.ts` | Village geometry, collisions, routes, spawns, cover, material tags and shared map features |
+| `src/materials.ts` | Local PBR texture loading, color spaces, meter-based projected UVs and shared contact detail |
+| `src/diagnostics.ts` | Dev-only F3 collision bounds, ramp tops, feet/camera positions and grounding readout |
 | `src/actors.ts` | Team character models and hands/weapon procedural animation |
 | `src/game.ts` | One RAF loop, 120Hz bounded simulation, input/overlays, AI, combat, lifecycle and effect pools |
 | `src/tactical-map.ts` | Aspect-correct world-to-map conversion, cached canvas geometry and expiring pings |
@@ -93,12 +96,21 @@ Navigation samples shared walkable surfaces and validates **every edge with the 
 
 With the dev server running, `/tests/browser.html` runs integration checks using actual game systems: spawn safety, connected lanes and physical bot traversal, damage/occlusion, ADS/crouch, magazine pose/ammo synchronization, overlay keyboard events, death/respawn/healing, team AI, a 90s accelerated match and a full score/time-limit match, results and repeated lifecycle restarts. Development-only pose and performance controls support visual inspection and a real-time 20s eight-actor sample. They are excluded from the production entry point. `window.__BLACKOUT__` provides diagnostics only on the main dev page; `snapshot()` includes rendering frame statistics.
 
-Development verification passed 23 unit tests and 23 browser integration checks. The production menu, full map, scoreboard, high/low quality and reduced-motion settings, ADS and shared reload poses were visually inspected. Native V2 pointer-lock/input checks were not completed because the desktop browser was in use; mouse feel and live audio localization remain manual validation items. A 20-second silent eight-actor browser sample on the local Apple M4 / 16 GB machine at 1280×800, high quality, DPR 1 recorded 1,200 frames, mean 16.67 ms (60 FPS), maximum 17.8 ms, and no sampled frame over 33.3 ms. This is a short development sample, not a sustained-performance guarantee or an audio-heavy benchmark.
+Current checks and measured results are recorded in [the verification report](docs/verification/REPORT.md), with comparable before/after screenshots. The visual harness `/tests/visual.html` provides fixed Street, Exterior, Interior, Hillside, Hip, ADS, Reload and Full map views; `?view=Street&clean=1` hides its tools. Neither harness is in the production build.
 
-Automated simulation is distinct from manual gameplay inspection. It does not prove mouse feel, competitive balance, audio localization or sustained long-session performance. The character and hand models remain stylized procedural geometry. Bots use local state machines rather than squad tactics, and recovery can move a stuck bot a short distance onto a nearby valid waypoint. Small curved props use conservative box collision bounds. Actors use separation steering instead of hard body blocking. No human-vs-human networking is included.
+Automated simulation and screenshot inspection do not prove mouse feel, competitive balance, live audio localization or sustained thermal performance. The character/hand models and animation remain stylized original geometry, without motion capture, foot IK or a photorealistic character asset. Small curved props use conservative box collision. Actors use separation steering rather than hard body blocking. Bot stuck recovery still permits a short move to a nearby reachable waypoint; the player never receives an alive recovery teleport.
+
+## Ground/camera regression fix
+
+The fault was reproduced at the balcony ramp's west side (`x=-16.5, z=4.5`). Ramp collision tested a shrunken center rectangle, allowing a standing body to overlap its solid wedge. The old upward ray began 5cm above the feet, inside that wedge. Its legitimate zero-distance hit was incorrectly treated as ceiling clearance and changed eye height to **-0.03m**, exposing the ground underside/sky while the HUD and separate weapon scene remained visible. Original team spawn feet were correctly at supported floor level; the rendered main slab was not missing.
+
+Ramp-side collision now uses the actor radius, and navigation uses that same corrected solver. Eye height derives from crouch/standing body height and is bounded inside the body. Movement substeps are bounded by time **and travel distance**, including public solver calls outside the 120Hz game loop. All 20 spawn candidates require a supported footprint and full headroom before use. A continuous solid ground slab plus an overlapping deeper foundation gives the village solid visible ground.
+
+Grounded, fully supported positions update the player's last-safe position. Falling out, non-finite/out-of-bounds positions, or persistent solid penetration cause an environmental death with no enemy credit and the regular three-second respawn. Only the dead camera is placed at the validated safe position; failures are not concealed by teleporting a live player. F3 displays collider boxes, ramp top boundaries, actor bounds, feet, camera and grounded/supported state in development. Production omits this module.
+
 
 For future multiplayer, move input commands, collision, hits, ammunition, healing, score and timers to an authoritative server; replicate actor snapshots, interpolate remote actors and add local prediction/reconciliation. Keep the existing rendering and menus on the client. This version deliberately has no network infrastructure.
 
 ## Attribution
 
-Map, signs, models and synthesized audio are original procedural content. No third-party media or copied maps/interfaces. Three.js is MIT licensed (`node_modules/three/LICENSE`); Vite, TypeScript and tsx retain their bundled licenses. Fonts are system-local, with no remote font or asset requests.
+See [ATTRIBUTION.md](ATTRIBUTION.md) and [the asset manifest](public/assets/manifest.json). Five Poly Haven CC0 texture sets provide stone, plaster, timber, dirt and worn metal, with base-color/normal/roughness maps at 1K. Runtime assets are local; there are no paid assets or downloaded character/weapon models. Original geometry and audio remain project content. Three.js and addons are MIT licensed. Fonts are system-local.

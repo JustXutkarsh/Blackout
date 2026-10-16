@@ -1,0 +1,17 @@
+import '../src/style.css';
+import { Game } from '../src/game';
+import { Vector3 } from 'three';
+const game=new Game();
+const g=game as unknown as {updatePlayer:(dt:number)=>void;renderCamera:(dt:number)=>void;updateHUD:()=>void};
+game.mode='paused';game.ui.playing();game.ui.overlay.hidden=true;
+const panel=document.createElement('div');panel.id='visual-tools';panel.style.cssText='position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:150;display:flex;gap:4px;max-width:95vw;flex-wrap:wrap';document.body.append(panel);
+const button=(label:string,fn:()=>void)=>{const b=document.createElement('button');b.textContent=label;b.style.cssText='padding:7px;background:#14232fe6;color:white;font:10px monospace';b.onclick=fn;panel.append(b);};
+const poses:Record<string,number[]>={Ground:[-17.05,.01,4.5,-1.15,.06],Street:[-17,0,-6,1.2,-.02],Courtyard:[-7,0,14,-.2,.02],Exterior:[0,0,15,0,.05],Interior:[-6,0,7,-.2,.03],Hillside:[20,2,12,.05,.04],Hip:[-12,0,10,-.4,-.015],ADS:[-12,0,10,-.4,-.015],Reload:[-12,0,10,-.4,-.015]};
+function pose(name:string){const [x,y,z,yaw,pitch]=poses[name];game.player.reset(new Vector3(x,y,z));game.player.protection=0;game.elapsed=15;game.player.grounded=true;game.yaw=yaw;game.pitch=pitch;game.eyeHeight=1.57;game.ads=name==='ADS'?1:0;game.player.weapon.mag=0;if(name==='Reload'){game.player.weapon.reload();game.player.weapon.tick(.7);}else game.player.weapon.mag=30;game.mode='paused';game.battleOverlay='none';game.ui.showMap(false);game.ui.playing(false);game.ui.overlay.hidden=true;g.updateHUD();g.renderCamera(0);document.title=`Mountain Turf / ${name}`;}
+Object.keys(poses).forEach(name=>button(name,()=>pose(name)));button('Full map',()=>{pose('Hip');game.toggleMap();});
+button('Probe ground',()=>{let failure:unknown;let minEye=10;const p=game.player;game.clearInput();for(const n of game.world.nav.nodes){p.reset(n);p.grounded=true;game.eyeHeight=1.57;g.updatePlayer(1/120);minEye=Math.min(minEye,game.eyeHeight);if(game.eyeHeight<.2){failure={node:n.toArray(),feet:p.pos.toArray(),eye:game.eyeHeight,blocked:game.world.physics.blocked(p.pos.x,p.pos.y,p.pos.z)};break;}}const out=document.createElement('pre');out.id='ground-probe';out.style.cssText='position:fixed;top:120px;left:260px;background:#15222bdd;color:white;z-index:150;padding:15px';out.textContent=JSON.stringify({minEye,failure},null,2);document.querySelector('#ground-probe')?.remove();document.body.append(out);g.renderCamera(0);});
+button('Characters',()=>{pose('Courtyard');game.yaw=0;game.actors[1].reset(new Vector3(-7,.015,10));game.actors[4].reset(new Vector3(-6,.015,10));for(const a of [game.actors[1],game.actors[4]]){a.yaw=Math.PI;a.protection=0;}});
+button('Diagnostics',()=>{document.dispatchEvent(new KeyboardEvent('keydown',{code:'F3',bubbles:true}));panel.hidden=true;});
+button('Hide tools',()=>{panel.hidden=true;document.querySelector('#ground-probe')?.remove();});const initial=new URLSearchParams(location.search).get('view')||'Courtyard';pose(initial==='Map'?'Hip':initial);if(initial==='Map')game.toggleMap();
+
+if(new URLSearchParams(location.search).has('clean'))panel.hidden=true;
