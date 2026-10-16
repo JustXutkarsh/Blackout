@@ -157,5 +157,17 @@
         }
       ]
     }
-  ]
+  ],
+  "originalMarketContent": {
+    "creator": "BLACKOUT project",
+    "source": "src/village.ts and src/actors.ts",
+    "thirdParty": false,
+    "content": [
+      "Instanced apple/orange/banana/watermelon geometry",
+      "Generated 256x128 watermelon and 128x128 striped fabric textures",
+      "Market stalls, baskets, scale, tea set, handcart, parked cycles and drain detail",
+      "Procedural civilian jackets, scarves and posture animation"
+    ],
+    "runtime": "Generated locally at initialization; shared meshes/materials; no remote requests"
+  }
 }

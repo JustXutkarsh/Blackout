@@ -1,0 +1,51 @@
+
+> blackout-mountain-turf@2.0.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ bundled PBR maps have verified source, redistribution license and matching checksums (12.034209ms)
+✔ map center, north-up axes and resizing preserve aspect ratio (4.358334ms)
+✔ non-symmetric world bounds map correctly (0.146959ms)
+✔ gunfire pings are bounded snapshots and expire at 1.5 active seconds (0.258792ms)
+✔ ray distance orders world occlusion and detects starting inside cover (1.813042ms)
+✔ grounded body slides along wall without crossing (1.329458ms)
+✔ jump respects ceilings and returns to floor (0.888458ms)
+✔ ramp ascends and descends continuously (3.004709ms)
+✔ navigation validates edges and routes around obstacle (12.191459ms)
+✔ ray misses parallel outside slab (0.217417ms)
+✔ crouch collision clears low ceiling while standing remains blocked (0.3245ms)
+✔ balcony ramp side rejects the reproduced ground-level wedge intrusion (1.089708ms)
+✔ large deltas and high falling speed cannot tunnel through thin floors or walls (0.570125ms)
+✔ spawn validation checks support footprint and full headroom (0.272416ms)
+✔ adjoining surfaces keep feet supported in both directions (0.798416ms)
+✔ camera eye stays inside standing and crouched collision body, never below feet (0.147833ms)
+✔ non-finite body state exits simulation for environmental death instead of hanging substeps (0.1225ms)
+✔ healing starts after five seconds and handles a step crossing the boundary (2.400916ms)
+✔ damage interrupts healing; rate caps at max HP (0.20575ms)
+✔ dead actors cannot heal and respawn delay is three active seconds (0.305792ms)
+✔ friendly fire and protected hits do not damage or interrupt healing (0.156459ms)
+✔ one elimination and death per victim, including repeated lethal events (4.488375ms)
+✔ environmental deaths never grant enemy points (0.191042ms)
+✔ independent lethal events count once for both teams and alive counts exclude dead (0.235166ms)
+✔ score limit, eight-minute time limit, victory, defeat and draw (0.293833ms)
+✔ rifle cooldown, empty ammo and no ammunition consumed on rejected attack (1.288792ms)
+✔ reload removes, inserts once at 68%, then bolts for an empty reload (0.407125ms)
+✔ reload cancellation before insertion consumes nothing; after insertion keeps transferred ammo (0.182167ms)
+✔ large reload steps transfer only available reserve and tactical reload skips bolt (0.1125ms)
+✔ weapon state remains frozen without simulation ticks; knife has bounded cadence (0.1675ms)
+✔ standing crouch prone and reverse use shared timed height/eye state without moving feet (1.991458ms)
+✔ blocked standing preserves crouched state beneath a low ceiling (0.236125ms)
+✔ prone requires complete supported footprint and cannot enter through a wall (0.131083ms)
+✔ prone rotation is swept and rejected near corners without changing valid yaw (0.429ms)
+✔ capsule crawl cannot pass walls, unsupported ledges or steep ramps (3.758209ms)
+✔ prone hitboxes are low, elongated and rotated; standing air above them is not a hit (0.468792ms)
+✔ prone transitions cannot spam, pause has no progression and respawn resets standing (0.185167ms)
+✔ eye and head hit bounds stay within the swept body during transitions (2.029917ms)
+✔ crawling crosses a small adjoining-floor seam but stops before a raised step (6.989833ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 455.491166

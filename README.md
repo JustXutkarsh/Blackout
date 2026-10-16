@@ -31,9 +31,10 @@ npm test
 | Hold right mouse | Aim down sights; rifle and pistol |
 | R | Reload |
 | 1 / 2 / 3 | Rifle / pistol / knife |
-| Shift | Sprint; lowers weapon, cancels ADS and blocks fire |
-| C | Toggle crouch; cannot stand under a low ceiling |
-| Space | Jump |
+| Shift | Request standing, then sprint; lowers weapon, cancels ADS and blocks fire |
+| C | Stand → crouch; crouch → stand; prone → crouch (requires clearance) |
+| Z | Toggle prone / standing on supported, sufficiently level ground |
+| Space | Jump standing; request standing from crouch/prone without jumping |
 | M | Toggle north-up full map while retaining mouse capture |
 | Hold Tab | Team scoreboard; releasing Tab closes it |
 | Escape | Close overlay first, otherwise pause / release mouse |
@@ -57,7 +58,7 @@ When paused, click the minimap to open an interactive map. Its close button retu
 
 ## Reloads and first-person animation
 
-Both procedural hands/forearms move with the weapon. Idle, walk, sprint, switch, fire, knife, ADS and reload poses use the active simulation clock. ADS reduces FOV, sensitivity, movement speed and spread; the front sights align to the camera's shot direction. Crouching changes collision height immediately and interpolates eye height within that body; the camera never uses a feet-level obstruction ray. Forearms remain sleeved/gloved. Characters have articulated hips/knees, aiming arms, distance-driven gait, breathing, shot recoil and a brief death collapse; these remain stylized procedural models.
+Both procedural hands/forearms move with the weapon. Idle, walk, sprint, switch, fire, knife, ADS and reload poses use the active simulation clock. Hold RMB to aim in every stance; ADS reduces FOV, sensitivity, movement speed and spread. Reload/stance transitions temporarily exit ADS and restore it afterward if RMB remains held; switching clears RMB. ADS sensitivity is tunable in `CONFIG.view.adsSensitivity`. Idle sway fades out while aiming; the front sights align to the camera's shot direction. One timed stance state drives collision height, eye position, movement speed, character pose and hitboxes. Feet remain fixed through transitions. Crouch takes 0.28s; prone takes 0.65s, followed by a short request cooldown. Transitions stop movement and attacks. Prone uses an oriented 2.23m-long capsule footprint, checked across its width and ends for support and clearance. Rotation is swept against nearby walls; unsuitable ramps/steps and unsupported ledges reject crawling or prone entry. Standing from prone conservatively requires full height over that entire footprint. Blocked requests preserve the last valid pose. Space requests standing without jumping; sprint starts only after standing completes. Death cancels transitions; respawn resets standing. The camera never uses a feet-level obstruction ray. Forearms remain sleeved/gloved. Characters have articulated hips/knees, aiming arms, distance-driven gait, breathing, shot recoil and a brief death collapse; these remain stylized procedural models.
 
 Reload progress is authoritative in `WeaponState`: removal at 20%, insertion/ammo transfer at 68%, and bolt/slide motion at 84% for empty reloads. Ammo is transferred once at insertion. Switching before insertion consumes no reserve; switching afterward keeps the transferred ammunition. Either switch cancels remaining animation. Death cancels safely; pause freezes it. Per-weapon cooldowns persist through switching, with an additional global switch lock. Holding automatic fire resumes only after reload and switch locks finish. Tactical reloads omit the empty bolt action.
 
@@ -66,20 +67,24 @@ Reload progress is authoritative in `WeaponState`: removal at 20%, insertion/amm
 - **Kora Co-op Warehouse:** pitched corrugated roof, four entrances, interior cover and an elevated deck with two ramp approaches. Courtyards outside have utility vehicles and crates.
 - **Village Street:** colorful plaster/stone shops, wood doors, shutters, alleys, an accessible corner room with two entrances, and a small ramp-accessed balcony. The warehouse limits its coverage.
 - **Terraced Hillside:** retaining walls, broad raised paths, end ramps and a middle cross-connection, sheds, trees, rock cover and exits toward both spawns.
+- **Nima Fruit Lane:** apple/orange crates, curved banana bunches, striped watermelons, a weighing scale and baskets beneath faded striped awnings. Ridge Harvest and Kora Tea include storage, a kettle/cups, sturdy counter cover and side passages. Parked scooters, a bicycle, a repair corner, delivery handcart, drains and cables give the lane a civilian purpose.
+- **Juniper Court / Market Steps:** a raised residential courtyard, wooden balcony and rooftop tank, connected by two gentle ramps and an eastern cross-connection. The balcony is decorative, not a bot navigation destination.
 - **Snowline / Ridgeback camps:** opposite ends, multiple spawn positions and screening walls that block direct spawn-to-spawn shots. Village retaining walls form intentional boundaries; decorative snowy mountains stay outside play.
+
+The ground footprint grows from 60 × 50m (3,000m²) to 72 × 50m (3,600m²), exactly **20%** by adding a 12m western strip. Existing landmarks retain their scale. The three main routes remain, with the western route looping through the market and residential court.
 
 The lightweight canvas minimap is generated from the same floor, ramp and solid geometry data as the world. It shows north-up lanes, building footprints, elevation, spawn zones, your rotating arrow and teammates. The full map adds location names and a legend. No ordinary enemy nameplates or permanent enemy map dots exist. Audible enemy firearm shots within 34m create fuzzy stationary pings for 1.5s; they do not follow the shooter, and knife attacks create none.
 
 ## Bots, architecture and tuning
 
-Bots use line of sight, reaction delays, imperfect aim, finite magazines/reserves and temporary sound/last-known positions. They target enemies only, split across three assigned routes, sometimes advance toward a nearby teammate's path, seek reachable cover for reloads/low health, and return to combat. Separation steering and stuck replanning reduce doorway piles. All bots heal and respawn by the player's rules. Easy/normal change reaction, accuracy and aggression, never HP or wall vision.
+Bots use line of sight, reaction delays, imperfect aim, finite magazines/reserves and temporary sound/last-known positions. They target enemies only, split across three assigned routes, sometimes advance toward a nearby teammate's path, seek reachable cover for reloads/low health, and return to combat. Separation steering and stuck replanning reduce doorway piles. Bots sometimes crouch near suitable low cover and stand before moving; autonomous prone selection is deliberately disabled to keep their routes reliable and combat moving. Their shared posture solver and hitboxes support prone when posed by the development harness. All bots heal and respawn by the player's rules. Easy/normal change reaction, accuracy and aggression, never HP or wall vision.
 
 | File | Responsibility |
 | --- | --- |
 | `src/config.ts` | Match, healing, weapon, reload-event, movement, ADS, intel and difficulty tuning |
 | `src/rules.ts` | Pure ammunition, damage, healing, life timers, team scores/counts and results |
-| `src/physics.ts` | Bounded fixed-step collision, crouch dimensions, ramps, world ray tests and A* navigation |
-| `src/world.ts` | Village geometry, collisions, routes, spawns, cover, material tags and shared map features |
+| `src/physics.ts`, `src/stance.ts` | Bounded collision, swept prone footprint/rotation, timed shared stance/eye/hitboxes, ramps, world ray tests and A* navigation |
+| `src/world.ts`, `src/village.ts` | Village/market geometry, instanced produce/props, collisions, routes, spawns, cover, material tags and shared map features |
 | `src/materials.ts` | Local PBR texture loading, color spaces, meter-based projected UVs and shared contact detail |
 | `src/diagnostics.ts` | Dev-only F3 collision bounds, ramp tops, feet/camera positions and grounding readout |
 | `src/actors.ts` | Team character models and hands/weapon procedural animation |
@@ -88,7 +93,7 @@ Bots use line of sight, reaction delays, imperfect aim, finite magazines/reserve
 | `src/audio.ts` | Positional Web Audio synthesis, wind ambience, surface steps/impacts and reload event sounds |
 | `src/ui.ts`, `src/style.css` | Daylight menus, HUD, healing, kill feed, maps, scoreboards and settings |
 
-Navigation samples shared walkable surfaces and validates **every edge with the actual actor movement solver**. Physics and hit tests are reused from V1. Shared/instanced static geometry, cached ramp bounds/map backgrounds, staggered perception/path updates, one directional shadow light, pooled 32-shot impacts/tracers and 24 shells keep cost bounded. DPR is capped at 1.5 high / 1 low, with 2.6M / 1.2M drawing-buffer pixel budgets. Low disables shadows while preserving visibility and information. The minimap updates at HUD cadence, not with a second world render.
+Navigation samples shared walkable surfaces and validates **every edge with the actual actor movement solver**. Physics and hit tests are reused from V1. Shared/instanced static geometry, cached ramp bounds/map backgrounds, staggered perception/path updates, one directional shadow light, pooled 32-shot impacts/tracers and 24 shells keep cost bounded. DPR is capped at 1.25 high / 1 low, with 1.8M / 1.2M drawing-buffer pixel budgets (`CONFIG.render`). Low disables shadows while preserving visibility and information. The minimap updates at HUD cadence, not with a second world render.
 
 ## Verification and limits
 
@@ -96,9 +101,9 @@ Navigation samples shared walkable surfaces and validates **every edge with the 
 
 With the dev server running, `/tests/browser.html` runs integration checks using actual game systems: spawn safety, connected lanes and physical bot traversal, damage/occlusion, ADS/crouch, magazine pose/ammo synchronization, overlay keyboard events, death/respawn/healing, team AI, a 90s accelerated match and a full score/time-limit match, results and repeated lifecycle restarts. Development-only pose and performance controls support visual inspection and a real-time 20s eight-actor sample. They are excluded from the production entry point. `window.__BLACKOUT__` provides diagnostics only on the main dev page; `snapshot()` includes rendering frame statistics.
 
-Current checks and measured results are recorded in [the verification report](docs/verification/REPORT.md), with comparable before/after screenshots. The visual harness `/tests/visual.html` provides fixed Street, Exterior, Interior, Hillside, Hip, ADS, Reload and Full map views; `?view=Street&clean=1` hides its tools. Neither harness is in the production build.
+Current market/stance checks and measurements are in [the market upgrade report](docs/market-upgrade/REPORT.md). The earlier ground fix and visual baseline are in [the prior verification report](docs/verification/REPORT.md), with comparable before/after screenshots. The visual harness `/tests/visual.html` provides fixed Street, Exterior, Interior, Hillside, Hip, ADS, Reload, Market, Court, MarketSteps, Crouch, Prone, CrouchADS, ProneADS and Full map views; `?view=Street&clean=1` hides its tools. Neither harness is in the production build.
 
-Automated simulation and screenshot inspection do not prove mouse feel, competitive balance, live audio localization or sustained thermal performance. The character/hand models and animation remain stylized original geometry, without motion capture, foot IK or a photorealistic character asset. Small curved props use conservative box collision. Actors use separation steering rather than hard body blocking. Bot stuck recovery still permits a short move to a nearby reachable waypoint; the player never receives an alive recovery teleport.
+Automated simulation and screenshot inspection do not prove mouse feel, competitive balance, live audio localization or sustained thermal performance. The character/hand models and animation remain stylized original geometry, without motion capture, foot IK or a photorealistic character asset. Small curved props use conservative box collision. Decorative produce, cloth and bicycle frames do not create tiny invisible obstacles; counters, substantial crates and scooter bodies are cover. Prone movement intentionally rejects slopes with more than 10cm height variation across the body, rather than floating over stairs. Character crawl remains a restrained procedural pose without terrain IK. Actors use separation steering rather than hard body blocking. Bot stuck recovery still permits a short move to a nearby reachable waypoint; the player never receives an alive recovery teleport.
 
 ## Ground/camera regression fix
 

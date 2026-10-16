@@ -4,20 +4,22 @@ import { Physics, Navigation, type Ramp } from './physics';
 import type { MapFeature } from './tactical-map';
 import type { Team } from './rules';
 import type { SurfaceAudio } from './audio';
+import { buildMarket } from './village';
 export type Pickup = { mesh:T.Group; pos:T.Vector3; kind:'health'|'ammo'; cooldown:number };
 export class World {
   physics=new Physics();nav!:Navigation;signs:T.MeshBasicMaterial[]=[];pickups:Pickup[]=[];
-  bounds={minX:-30,maxX:30,minZ:-25,maxZ:25};features:MapFeature[]=[];kinds:SurfaceAudio[]=[];coverPoints:T.Vector3[]=[];
+  bounds={minX:-42,maxX:30,minZ:-25,maxZ:25};features:MapFeature[]=[];kinds:SurfaceAudio[]=[];lastCreak=-30;coverPoints:T.Vector3[]=[];
+  landmarks:[string,number,number][]=[['KORA WAREHOUSE',0,0],['VILLAGE STREET',-20,-17],['TERRACED HILLSIDE',21,16],['CO-OP COURTYARD',0,13],['BLUE / SNOWLINE',0,22],['ORANGE / RIDGEBACK',0,-22],['NIMA FRUIT LANE',-35,-8],['JUNIPER COURT',-35,16],['MARKET STEPS',-30,7]];movingCloth:T.Mesh[]=[];dust?:T.Points;
   ambient=new T.HemisphereLight(0xc9dfff,0xb3a991,2.1);moon=new T.DirectionalLight(0xffe7c0,3.1);
   teamSpawns:Record<Team,T.Vector3[]>={blue:[],orange:[]};spawnPoints:T.Vector3[]=[];
-  routes=[[-14,0,14,-19,0,6,-15,0,-7,-13,0,-15],[-6,0,13,-3,0,6,-3,0,-5,-6,0,-13],[20,0,21,20,2,10,16,2,0,20,2,-10,20,0,-21]].map(a=>{const out:T.Vector3[]=[];for(let i=0;i<a.length;i+=3)out.push(new T.Vector3(a[i],a[i+1],a[i+2]));return out;});
+  routes=[[-14,0,16,-29,0,22,-34,.6,17,-34,0,3,-34,0,-12,-29,0,-17,-19,0,-6,-13,0,-15],[-6,0,13,-3,0,6,-3,0,-5,-6,0,-13],[20,0,21,20,2,10,16,2,0,20,2,-10,20,0,-21]].map(a=>{const out:T.Vector3[]=[];for(let i=0;i<a.length;i+=3)out.push(new T.Vector3(a[i],a[i+1],a[i+2]));return out;});
   private mats=new Map<string,T.MeshStandardMaterial>();private roofSheetMats=new Map<number,T.MeshStandardMaterial>(); private cube=new T.BoxGeometry(1,1,1);private barrelGeometry=new T.CylinderGeometry(.42,.42,1.1,10);private bandGeometry=new T.CylinderGeometry(.435,.435,.07,10);private rockGeometry=new T.DodecahedronGeometry(1,0);
   constructor(public scene:T.Scene) {
     scene.background=new T.Color(0x9dcce5);scene.fog=new T.FogExp2(0xb9d5df,.0035);scene.add(this.ambient,this.moon);this.moon.position.set(-30,55,20);
-    this.moon.castShadow=true;this.moon.shadow.mapSize.set(1024,1024);Object.assign(this.moon.shadow.camera,{left:-36,right:36,top:32,bottom:-32,near:1,far:120});this.moon.shadow.bias=-.0015;
+    this.moon.castShadow=true;this.moon.shadow.mapSize.set(1024,1024);Object.assign(this.moon.shadow.camera,{left:-46,right:36,top:32,bottom:-32,near:1,far:120});this.moon.shadow.bias=-.0015;
     for(const team of ['blue','orange'] as const)for(const z of [20.5,23])for(const x of [-8,-4,0,4,8])this.teamSpawns[team].push(new T.Vector3(x,0,z*(team==='blue'?1:-1)));
     this.spawnPoints=[...this.teamSpawns.blue,...this.teamSpawns.orange];
-    this.build();this.courtyardDetail();this.villageDetail();this.batchBoxes();this.nav=new Navigation(this.physics);
+    this.build();this.courtyardDetail();this.villageDetail();buildMarket(this);this.batchBoxes();this.nav=new Navigation(this.physics,this.bounds);
   }
   private batchBoxes(){
     const groups=new Map<string,T.Mesh[]>();
@@ -51,7 +53,7 @@ export class World {
   }
 
   private build(){
-    this.floor(0,0,60,50,0,0xb7b39c);
+    this.floor(-6,0,72,50,0,0xb7b39c);
     this.floor(-17,0,10,38,.01,0xc8b397);this.floor(0,0,21,34,.015,0xc7c3b4);
     // Raised flank: two end ramps and a central cross-connection.
     this.box(21, .85,0,14,1.7,28,0x8b9080,true,0,false);this.floor(21,0,14,28,2,0xa6b18a);
@@ -76,7 +78,7 @@ export class World {
     // Village rooms, shopfronts, balcony and connected street alleys.
     this.house(-24,-11,7,7,0xdfc18e,0x2e808e,false);this.house(-24,11,7,7,0xe5d5b8,0xb66048,false);
     this.house(-23,0,8,8,0xe4d7b9,0x5b9b91,true);
-    this.sign('SUMMIT STORES',-18.85,3.05,0,5,.5,'#397b75',Math.PI/2);
+    this.sign('SUMMIT GROCERY',-18.85,3.05,0,5,.5,'#397b75',Math.PI/2);
     this.floor(-16,1.5,6,5,2.7,0xab9580);this.ramp({x1:-16.5,x2:-13.5,z1:4,z2:13,low:0,high:2.7});
     for(const x of [-18.8,-13.2])this.box(x,3.12,1.5,.15,.84,5,0x8d6950);this.box(-16,3.12,-1,6,.84,.16,0x8d6950);
     this.sign('TEA / CHAI',-20.28,3.05,11,4,.5,'#ad5945',Math.PI/2);this.sign('MOUNTAIN TURF',-20.28,3.05,-11,5,.5,'#307f91',Math.PI/2);
@@ -90,7 +92,7 @@ export class World {
     this.box(-11,1.4,0,1.2,2.8,2.1,0xa3a08c);this.box(11,1.2,8,1.4,2.4,2,0xa6a08a);
     for(const [x,z,y] of [[-27,19,0],[-27,-20,0],[27,18,0],[27,-18,0],[27,3,2],[25,-12,2],[-28,4,0]])this.tree(x,z,y);
     // Painted boundaries read as village retaining walls; mountains remain decorative.
-    this.box(-29.5,2,0,1,4,50,0x8f998c);this.box(29.5,3,0,1,6,50,0x8f998c);this.box(0,2,-24.8,60,4,.6,0x929b8d);this.box(0,2,24.8,60,4,.6,0x929b8d);
+    this.box(-41.5,1.5,0,1,3,50,0x8f998c);this.box(29.5,3,0,1,6,50,0x8f998c);this.box(-6,2,-24.8,72,4,.6,0x929b8d);this.box(-6,2,24.8,72,4,.6,0x929b8d);
     for(const x of [-27,-18,13,27])for(const z of [-18,18]){this.box(x,3.3,z,.15,6.6,.15,0x7c6c58);}
     for(const z of [-18,18]){const pts=[];for(let i=0;i<=28;i++)pts.push(new T.Vector3(-27+i*1.93,6.6-Math.sin(i/28*Math.PI)*1.4,z));this.scene.add(new T.Line(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0x525b55})));for(let i=0;i<24;i++){const x=-25+i*2.1,y=6.6-Math.sin((x+27)/54*Math.PI)*1.4;this.box(x,y-.25,z,.55,.5,.035,[0x5285ad,0xd2a55a,0xb55f54,0x638f7b][i%4],false);}}
     this.mountains();
@@ -117,7 +119,7 @@ export class World {
     }
     for(const z of [-9,9])for(const x of [-5.5,5.5])this.contact(x,.022,z,7,.8);
   }
-  private contact(x:number,y:number,z:number,w:number,d:number){
+  contact(x:number,y:number,z:number,w:number,d:number){
     const mesh=new T.Mesh(new T.PlaneGeometry(w,d),contactMaterial());mesh.rotation.x=-Math.PI/2;mesh.position.set(x,y,z);this.scene.add(mesh);
   }
   private villageDetail(){
@@ -145,7 +147,7 @@ export class World {
     // Tufts stay at retaining walls, sheds and tree bases, away from route centers.
     const blade=new T.ConeGeometry(.09,.48,4),grass=this.mat(0x67784e);const plants=new T.InstancedMesh(blade,grass,140),matrix=new T.Matrix4();
     for(let i=0;i<140;i++){const x=26.8+Math.sin(i*4.7)*.7,z=-12+(i%38)*.64,y=2;matrix.compose(new T.Vector3(x,y+.18,z),new T.Quaternion().setFromEuler(new T.Euler(.12*Math.sin(i),i*.9,.13*Math.cos(i))),new T.Vector3(1, .6+(i%5)*.14,1));plants.setMatrixAt(i,matrix);}plants.computeBoundingSphere();this.scene.add(plants);
-    this.box(0,-.9,0,64,1.2,54,0x8b9080,true,0,false); // Deep village foundation beneath the continuous playable slab.
+    this.box(-6,-.9,0,76,1.2,54,0x8b9080,true,0,false); // Deep village foundation beneath the continuous playable slab.
   }
   private mountains(){
     for(let layer=0;layer<2;layer++){
@@ -158,7 +160,7 @@ export class World {
       const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();this.scene.add(new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,roughness:1,side:T.DoubleSide})));
     }
   }
-  private roof(x:number,z:number,w:number,d:number,y:number,rise:number,color:number){
+  roof(x:number,z:number,w:number,d:number,y:number,rise:number,color:number){
     const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([-w/2,0,-d/2,0,rise,-d/2,w/2,0,-d/2,-w/2,0,d/2,0,rise,d/2,w/2,0,d/2],3));g.setIndex([0,3,4,0,4,1,1,4,5,1,5,2,0,1,2,3,5,4]);g.computeVertexNormals();const roofMat=this.mat(color);roofMat.side=T.DoubleSide;const roof=new T.Mesh(g,roofMat);roof.position.set(x,y,z);roof.castShadow=true;this.scene.add(roof);
     const positions:number[]=[],uv:number[]=[],indices:number[]=[];const n=Math.ceil(w/.08);
     for(let i=0;i<=n;i++){const dx=-w/2+i*w/n,sy=rise*(1-Math.abs(dx)/(w/2))+.025+Math.cos(dx/.12*Math.PI*2)*.018;for(const zz of [-d/2,d/2]){positions.push(dx,sy,zz);uv.push(dx,zz);}if(i<n){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}}
@@ -166,7 +168,7 @@ export class World {
     for(const dx of [-w/2,w/2])this.box(x+dx,y,z,.13,.16,d+.08,0x665b4d,false);
 
   }
-  private house(x:number,z:number,w:number,d:number,color:number,trim:number,room=false,y=0){
+  house(x:number,z:number,w:number,d:number,color:number,trim:number,room=false,y=0){
     if(room){this.floor(x,z,w,d,y,0xc1b39c);this.box(x-w/2,y+1.6,z,.3,3.2,d,color);this.box(x,y+1.6,z+d/2,w,3.2,.3,color);for(const zz of [-d/2+1,d/2-1])this.box(x+w/2,y+1.6,z+zz,.3,3.2,2,color);for(const xx of [-w/2+1,w/2-1])this.box(x+xx,y+1.6,z-d/2,2,3.2,.3,color);this.box(x,y+3.25,z,w,.15,d,0x837d69);}
     else this.box(x,y+1.65,z,w,3.3,d,color);
     this.roof(x,z,w+.6,d+.6,y+3.35,1.1,trim);
@@ -174,10 +176,10 @@ export class World {
     if(!room)this.box(x+w/2+.07,y+1.15,z,.08,2.3,1,0x7e6044,false);
     for(let h=.4;h<1.2;h+=.35)this.box(x,y+h,z+d/2+.03,w,.08,.04,0x999c88,false);
   }
-  private crate(x:number,z:number,y=0,size=1.5){this.box(x,y+size/2,z,size,size,size,0x9a7750);for(const dx of [-.38,.38])this.box(x+dx*size,y+size/2,z+size/2+.02,.08,size,.035,0x735c43,false);this.coverPoints.push(new T.Vector3(x-size*.8,y,z));}
-  private barrel(x:number,z:number,y:number){const body=new T.Mesh(this.barrelGeometry,this.mat(0x648087));body.position.set(x,y+.55,z);body.castShadow=true;body.receiveShadow=true;this.scene.add(body);for(const h of [.18,.88]){const band=new T.Mesh(this.bandGeometry,this.mat(0x53636a));band.position.set(x,y+h,z);this.scene.add(band);}this.physics.addBox(x,y+.55,z,.84,1.1,.84);this.kinds.push('metal');this.features.push({x,z,w:.84,d:.84,y:y+1.1,kind:'cover'});}
+  crate(x:number,z:number,y=0,size=1.5){this.box(x,y+size/2,z,size,size,size,0x9a7750);for(const dx of [-.38,.38])this.box(x+dx*size,y+size/2,z+size/2+.02,.08,size,.035,0x735c43,false);this.coverPoints.push(new T.Vector3(x-size*.8,y,z));}
+  barrel(x:number,z:number,y:number){const body=new T.Mesh(this.barrelGeometry,this.mat(0x648087));body.position.set(x,y+.55,z);body.castShadow=true;body.receiveShadow=true;this.scene.add(body);for(const h of [.18,.88]){const band=new T.Mesh(this.bandGeometry,this.mat(0x53636a));band.position.set(x,y+h,z);this.scene.add(band);}this.physics.addBox(x,y+.55,z,.84,1.1,.84);this.kinds.push('metal');this.features.push({x,z,w:.84,d:.84,y:y+1.1,kind:'cover'});}
   private rock(x:number,z:number,y:number,w:number,h:number,d:number){this.rockGeometry.computeBoundingBox();const b=this.rockGeometry.boundingBox!;const rock=new T.Mesh(this.rockGeometry,this.mat(0x939a8a));rock.scale.set(w/(b.max.x-b.min.x),h/(b.max.y-b.min.y),d/(b.max.z-b.min.z));rock.position.set(x,y+h/2,z);rock.castShadow=true;rock.receiveShadow=true;this.scene.add(rock);this.physics.addBox(x,y+h/2,z,w,h,d);this.kinds.push('stone');this.features.push({x,z,w,d,y:y+h,kind:'cover'});}
-  private vehicle(x:number,z:number,y:number,color:number){
+  vehicle(x:number,z:number,y:number,color:number){
     this.box(x,y+.65,z,2.1,.65,4.1,color);this.box(x,y+1.45,z-.6,2,1.05,1.8,color);
     for(const side of [-1,1]){this.box(x+side*1.015,y+1.65,z-.65,.025,.6,1.32,0x334c54,false);this.box(x+side*1.04,y+1.2,z-.05,.03,.04,.22,0x53636a,false);this.box(x+side*1.1,y+1.6,z-1.2,.15,.2,.23,0x53636a,false);this.box(x+side*.7,y+.85,z-2.07,.38,.21,.045,0xe1d2a6,false);this.box(x+side*1,y+.9,z+1.25,.08,.4,1.8,color,false);}
     this.box(x,y+1.64,z-1.52,1.72,.62,.035,0x334c54,false);this.box(x,y+1.63,z+.32,1.7,.6,.035,0x334c54,false);this.box(x,y+.5,z-2.13,2.2,.17,.18,0x53636a,false);
@@ -185,9 +187,9 @@ export class World {
     for(const zz of [.65,1.1,1.55])this.box(x,y+.98,z+zz,1.7,.07,.08,0x665b4d,false);this.contact(x,y+.025,z,2.8,4.8);
   }
 
-  private tree(x:number,z:number,y:number){this.box(x,y+1.5,z,.65,3,.65,0x7d6b4d);for(let i=0;i<3;i++){const tree=new T.Mesh(new T.ConeGeometry(2.2-i*.4,3.5,7),this.mat(0x52755e+i*0x080600));tree.position.set(x,y+3+i*1.1,z);this.scene.add(tree);}}
-  surfaceAt(p:T.Vector3):SurfaceAudio{for(let i=this.physics.boxes.length-1;i>=0;i--){const b=this.physics.boxes[i];if(p.x>=b.min.x-.12&&p.x<=b.max.x+.12&&p.z>=b.min.z-.12&&p.z<=b.max.z+.12&&p.y>=b.min.y-.12&&p.y<=b.max.y+.12)return this.kinds[i];}return 'stone';}
-  update(dt:number,t:number,_low:boolean){for(const p of this.pickups){p.mesh.visible=p.cooldown<=0;if(p.cooldown>0)p.cooldown=Math.max(0,p.cooldown-dt);p.mesh.position.y=p.pos.y+.18;}}
-  zone(p:T.Vector3){return p.z>17?'SNOWLINE CAMP':p.z<-17?'RIDGEBACK CAMP':p.x>12?'TERRACED HILLSIDE':p.x<-12?'VILLAGE STREET':Math.abs(p.z)<9&&Math.abs(p.x)<9?'KORA WAREHOUSE':'CO-OP COURTYARD';}
+  tree(x:number,z:number,y:number){this.box(x,y+1.5,z,.65,3,.65,0x7d6b4d);for(let i=0;i<3;i++){const tree=new T.Mesh(new T.ConeGeometry(2.2-i*.4,3.5,7),this.mat(0x52755e+i*0x080600));tree.position.set(x,y+3+i*1.1,z);this.scene.add(tree);}}
+  surfaceAt(p:T.Vector3):SurfaceAudio{for(let i=this.physics.boxes.length-1;i>=0;i--){const b=this.physics.boxes[i];if(p.x>=b.min.x-.12&&p.x<=b.max.x+.12&&p.z>=b.min.z-.12&&p.z<=b.max.z+.12&&p.y>=b.min.y-.12&&p.y<=b.max.y+.12)return p.y<.7&&b.max.y<.7&&b.max.x-b.min.x>3&&b.max.z-b.min.z>3?'dirt':this.kinds[i];}return 'stone';}
+  update(dt:number,t:number,_low:boolean,reduced=false){for(let i=0;i<this.movingCloth.length;i++)this.movingCloth[i].rotation.z=reduced?0:Math.sin(t*.7+i)*.018;if(this.dust){this.dust.visible=!_low&&!reduced;this.dust.rotation.y=Math.sin(t*.05)*.01;}for(const p of this.pickups){p.mesh.visible=p.cooldown<=0;if(p.cooldown>0)p.cooldown=Math.max(0,p.cooldown-dt);p.mesh.position.y=p.pos.y+.18;}}
+  zone(p:T.Vector3){return p.x<-29?(p.z>9?'JUNIPER COURT':p.z<-15?'PASS REPAIR':'NIMA FRUIT LANE'):p.z>17?'SNOWLINE CAMP':p.z<-17?'RIDGEBACK CAMP':p.x>12?'TERRACED HILLSIDE':p.x<-12?'VILLAGE STREET':Math.abs(p.z)<9&&Math.abs(p.x)<9?'KORA WAREHOUSE':'CO-OP COURTYARD';}
   dispose(){disposeSurfaceMaps();this.scene.traverse(o=>{if(o instanceof T.Mesh || o instanceof T.Line || o instanceof T.Points){o.geometry.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material]){if('map'in m)(m as T.MeshStandardMaterial).map?.dispose();m.dispose();}}});}
 }

@@ -12,7 +12,7 @@ export class Pings{
 }
 export class TacticalMap{
   private backgrounds=new Map<string,HTMLCanvasElement>();
-  constructor(public bounds:Bounds,public features:MapFeature[]){}
+  constructor(public bounds:Bounds,public features:MapFeature[],public labels:readonly [string,number,number][]=[]){ }
   draw(canvas:HTMLCanvasElement,actors:Actor[],pings:Ping[],yaw:number,full=false){
     const w=full?720:230,h=full?600:192; if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
     const key=`${w},${h}`;let background=this.backgrounds.get(key);if(!background){background=document.createElement('canvas');background.width=w;background.height=h;this.base(background.getContext('2d')!,w,h,full);this.backgrounds.set(key,background);}
@@ -26,6 +26,6 @@ export class TacticalMap{
     for(const f of this.features.filter(f=>f.kind==='floor').sort((a,b)=>a.y-b.y)){c.fillStyle=f.y>1?'#b6c79e':f.w<15?'#d3bb96':'#dcd5bc';rect(f);}
     for(const f of this.features.filter(f=>f.kind!=='floor')){c.fillStyle=f.kind==='ramp'?'#ccd29a':f.kind==='building'?'#8d958d':'#a99a7e';rect(f);}
     for(const [z,color] of [[21,'#318bc14a'],[-21,'#e681304a']] as const){const p=worldToMap({x:-10,z:z-3},this.bounds,w,h);c.fillStyle=color;c.fillRect(p.x,p.y,20*p.scale,6*p.scale);}
-    if(full){for(const [name,x,z] of [['KORA WAREHOUSE',0,0],['VILLAGE STREET',-20,-17],['TERRACED HILLSIDE',21,16],['CO-OP COURTYARD',0,13],['BLUE / SNOWLINE',0,22],['ORANGE / RIDGEBACK',0,-22]] as const){const p=worldToMap({x,z},this.bounds,w,h);c.font='bold 12px monospace';const width=c.measureText(name).width;c.fillStyle='#f7f4e3e8';c.fillRect(p.x-width/2-5,p.y-11,width+10,18);c.textAlign='center';c.fillStyle='#31474d';c.fillText(name,p.x,p.y+2);c.textAlign='left';}}
+    if(full){for(const [name,x,z] of this.labels){const p=worldToMap({x,z},this.bounds,w,h);c.font='bold 12px monospace';const width=c.measureText(name).width;c.fillStyle='#f7f4e3e8';c.fillRect(p.x-width/2-5,p.y-11,width+10,18);c.textAlign='center';c.fillStyle='#31474d';c.fillText(name,p.x,p.y+2);c.textAlign='left';}}
   }
 }
