@@ -1,0 +1,65 @@
+
+> blackout-mountain-turf@2.0.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ bundled PBR maps have verified source, redistribution license and matching checksums (31.923875ms)
+✔ bundled character, motion and clothing files retain verified CC0 provenance and checksums (8.744625ms)
+✔ cloned actors own skeletons, animation weights and materials without changing the template (16.695833ms)
+✔ retargeted crouch and prone head anchors remain inside the authoritative head region (36.77775ms)
+✔ first person mesh contains skinned forearms/hands only, with normalized weights (39.363666ms)
+✔ rest-pose calibration preserves ankle orientation and animation never moves the actor (2.932542ms)
+✔ first person wrists reach both weapon grips in hip fire and ADS without moving the weapon (37.174542ms)
+✔ death releases the authored upper body and restarting restores the armed action (3.118333ms)
+✔ map center, north-up axes and resizing preserve aspect ratio (3.559125ms)
+✔ non-symmetric world bounds map correctly (0.177334ms)
+✔ gunfire pings are bounded snapshots and expire at 1.5 active seconds (0.283833ms)
+✔ locomotion phase and footstep crossings come from actual ground travel, never idle time (3.888833ms)
+✔ backward and strafe sprint input does not choose a forward sprint animation (0.298667ms)
+✔ independent motion states, airborne landing and respawn reset (0.306417ms)
+✔ ray distance orders world occlusion and detects starting inside cover (2.042833ms)
+✔ grounded body slides along wall without crossing (1.162292ms)
+✔ jump respects ceilings and returns to floor (1.102333ms)
+✔ ramp ascends and descends continuously (3.248458ms)
+✔ navigation validates edges and routes around obstacle (18.36ms)
+✔ ray misses parallel outside slab (0.205958ms)
+✔ crouch collision clears low ceiling while standing remains blocked (0.309541ms)
+✔ balcony ramp side rejects the reproduced ground-level wedge intrusion (1.118625ms)
+✔ large deltas and high falling speed cannot tunnel through thin floors or walls (1.002083ms)
+✔ spawn validation checks support footprint and full headroom (0.373125ms)
+✔ adjoining surfaces keep feet supported in both directions (0.649625ms)
+✔ camera eye stays inside standing and crouched collision body, never below feet (0.203458ms)
+✔ non-finite body state exits simulation for environmental death instead of hanging substeps (0.1895ms)
+✔ healing starts after five seconds and handles a step crossing the boundary (2.156292ms)
+✔ damage interrupts healing; rate caps at max HP (0.241166ms)
+✔ dead actors cannot heal and respawn delay is three active seconds (0.132875ms)
+✔ friendly fire and protected hits do not damage or interrupt healing (0.180041ms)
+✔ one elimination and death per victim, including repeated lethal events (14.448625ms)
+✔ environmental deaths never grant enemy points (0.215209ms)
+✔ independent lethal events count once for both teams and alive counts exclude dead (0.202167ms)
+✔ score limit, eight-minute time limit, victory, defeat and draw (0.154833ms)
+✔ rifle cooldown, empty ammo and no ammunition consumed on rejected attack (0.692458ms)
+✔ reload removes, inserts once at 68%, then bolts for an empty reload (0.367125ms)
+✔ reload cancellation before insertion consumes nothing; after insertion keeps transferred ammo (0.168625ms)
+✔ large reload steps transfer only available reserve and tactical reload skips bolt (0.128208ms)
+✔ weapon state remains frozen without simulation ticks; knife has bounded cadence (0.12075ms)
+✔ automatic reload starts once and uses the manual transfer timeline (0.727917ms)
+✔ automatic reload respects disabled dead switching knife and empty reserve states (0.198833ms)
+✔ automatic reload transfers partial reserve once and cancels safely at insertion boundary (0.226ms)
+✔ automatic sprint exit delay freezes without ticks and is cancelled by switching (0.1895ms)
+✔ standing crouch prone and reverse use shared timed height/eye state without moving feet (3.454209ms)
+✔ blocked standing preserves crouched state beneath a low ceiling (0.512542ms)
+✔ prone requires complete supported footprint and cannot enter through a wall (0.909041ms)
+✔ prone rotation is swept and rejected near corners without changing valid yaw (0.855708ms)
+✔ capsule crawl cannot pass walls, unsupported ledges or steep ramps (7.413416ms)
+✔ prone hitboxes are low, elongated and rotated; standing air above them is not a hit (0.614834ms)
+✔ prone transitions cannot spam, pause has no progression and respawn resets standing (0.414834ms)
+✔ eye and head hit bounds stay within the swept body during transitions (4.228333ms)
+✔ crawling crosses a small adjoining-floor seam but stops before a raised step (10.481625ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 781.400958

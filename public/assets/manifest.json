@@ -169,5 +169,58 @@
       "Procedural civilian jackets, scarves and posture animation"
     ],
     "runtime": "Generated locally at initialization; shared meshes/materials; no remote requests"
-  }
+  },
+  "characterAssets": [
+    {
+      "id": "quaternius-crew",
+      "source": "https://quaternius.com/packs/universalbasecharacters.html",
+      "animationSource": "https://quaternius.com/packs/universalanimationlibrary.html",
+      "creator": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseSource": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceMirror": "https://github.com/NafisRayan/Animate-Rigged-Humanoid-No-Blender",
+      "mirrorRevision": "5821923af517ac5fdc82505faa92a0d575fc1b1a",
+      "modifications": "Superhero Male Standard mesh, optimized embedded 256px eyes/hair and 1K body maps; original skinned clothing regions, boots and accessories; cropped first-person forearms; 16 Standard motion clips sampled at 30Hz and calibrated to body rest pose. No paid Source assets.",
+      "files": [
+        {
+          "path": "assets/characters/crew-base.glb",
+          "sha256": "90296a5087682bd70b3b969e3b7ba3d4411e63a11ecd227ad84c59e9a65f904d"
+        },
+        {
+          "path": "assets/characters/crew-motion.glb",
+          "sha256": "0fc172edea41c5ffa145db7bc5fc3b5c9d97c07f35c4fc01f93f4832cbd52341"
+        },
+        {
+          "path": "assets/characters/CC0-Quaternius.txt",
+          "sha256": "d77329b05c4c206e76c83285ecdd1e5f2b3df2350ec80657ebdb5a706a0fc0de"
+        }
+      ]
+    },
+    {
+      "id": "denim_fabric",
+      "source": "https://polyhaven.com/a/denim_fabric",
+      "creator": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "files": [
+        {
+          "path": "assets/characters/denim_diff.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_diff_1k.jpg",
+          "sha256": "d6d0254e2c90768482b0be8cfdc16e18117acc92bad00d406fd4b9be24facdec"
+        },
+        {
+          "path": "assets/characters/denim_nor_gl.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_nor_gl_1k.jpg",
+          "sha256": "de0e9c5ed5cce7dacd50a67be16c6d8b8dc036907638e3702729c2f60296094e"
+        },
+        {
+          "path": "assets/characters/denim_rough.jpg",
+          "sourceFile": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_rough_1k.jpg",
+          "sha256": "51b971b7e83d733d88940be2a417c6ce8ea3a82c27a7cb3525f4bacc97aad2b7"
+        }
+      ],
+      "modifications": "1K base-color/OpenGL normal/roughness; meter-scaled rest-space clothing UVs and muted garment tints. Runtime-local only."
+    }
+  ]
 }

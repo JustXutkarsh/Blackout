@@ -1,0 +1,39 @@
+{
+  "frames": 1195,
+  "totalMs": 19999.199999999997,
+  "maxMs": 99.90000000000873,
+  "over33ms": 1,
+  "meanMs": 16.73573221757322,
+  "meanFps": 59.75239009560383,
+  "quality": "low",
+  "viewport": [
+    1280,
+    720
+  ],
+  "pixelRatio": 1,
+  "draw": {
+    "frame": 8925,
+    "calls": 338,
+    "triangles": 138534,
+    "points": 0,
+    "lines": 129
+  },
+  "memory": {
+    "geometries": 624,
+    "textures": 75
+  },
+  "programs": 64,
+  "assets": {
+    "started": 178.5,
+    "finished": 1042.7000000029802,
+    "loaded": 15,
+    "total": 15,
+    "failed": []
+  },
+  "characters": {
+    "state": "ready",
+    "loadMs": 682.8999999985099,
+    "error": ""
+  },
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+}

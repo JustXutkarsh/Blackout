@@ -1,0 +1,19 @@
+{
+  "assets": {
+    "characterLoadMs": "569.6000000014901",
+    "characterState": "ready",
+    "failed": "0",
+    "loadMs": "933.8000000044703",
+    "loaded": "15"
+  },
+  "settingsPersistence": {
+    "autoReloadFalsePersisted": true,
+    "ads07Persisted": true,
+    "restored": {
+      "autoReload": true,
+      "ads": 0.6
+    }
+  },
+  "start": "match initialized at 4/4 alive each; pointer lock rejected by embedded browser; match safely paused",
+  "logs": []
+}

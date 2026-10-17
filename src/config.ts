@@ -1,5 +1,6 @@
 export const CONFIG = {
   matchSeconds: 480, targetScore: 40, maxHealth: 100, respawnSeconds: 3, protectionSeconds: 2,
+  animation: { turnSpeed: 6, blendSeconds: .16, sprintExit: .15, distantHz: 15, nearDistance: 24 },
   reloadEvents: { remove: .2, insert: .68, bolt: .84 },
   healing: { delay: 5, perSecond: 5 },
   intel: { pingSeconds: 1.5, audibleRadius: 34 },
@@ -16,8 +17,8 @@ export const CONFIG = {
 } as const;
 export type WeaponId = keyof typeof CONFIG.weapons;
 export type Difficulty = keyof typeof CONFIG.bots;
-export type Settings = { sensitivity: number; volume: number; quality: 'low' | 'high'; reduced: boolean };
-export const DEFAULT_SETTINGS: Settings = { sensitivity: 1, volume: .45, quality: 'high', reduced: false };
+export type Settings = { sensitivity: number; adsSensitivity: number; autoReload:boolean; volume: number; quality: 'low' | 'high'; reduced: boolean };
+export const DEFAULT_SETTINGS: Settings = { sensitivity: 1, adsSensitivity:.6, autoReload:true, volume: .45, quality: 'high', reduced: false };
 export function loadSettings(): Settings {
-  try { const s = JSON.parse(localStorage.getItem('blackout.settings') || '{}'); return { sensitivity: Math.max(.2, Math.min(2.5, Number(s.sensitivity) || 1)), volume: typeof s.volume === 'number' ? Math.max(0, Math.min(1, s.volume)) : .45, quality: s.quality === 'low' ? 'low' : 'high', reduced: s.reduced === true }; } catch { return { ...DEFAULT_SETTINGS }; }
+  try { const s = JSON.parse(localStorage.getItem('blackout.settings') || '{}'); return { autoReload:s.autoReload!==false, adsSensitivity:Math.max(.2,Math.min(1,Number(s.adsSensitivity)||.6)), sensitivity: Math.max(.2, Math.min(2.5, Number(s.sensitivity) || 1)), volume: typeof s.volume === 'number' ? Math.max(0, Math.min(1, s.volume)) : .45, quality: s.quality === 'low' ? 'low' : 'high', reduced: s.reduced === true }; } catch { return { ...DEFAULT_SETTINGS }; }
 }

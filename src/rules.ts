@@ -1,6 +1,6 @@
 import { CONFIG, type WeaponId } from './config';
 export class WeaponState {
-  mag:number; reserve:number; cooldown=0; reloadLeft=0; reloadEmpty=false; transferred=false;
+  mag:number; reserve:number; cooldown=0; reloadLeft=0; reloadEmpty=false; transferred=false;autoWait=0;
   constructor(public id:WeaponId){this.mag=CONFIG.weapons[id].mag;this.reserve=CONFIG.weapons[id].reserve;}
   get progress(){return this.reloadLeft>0?1-this.reloadLeft/CONFIG.weapons[this.id].reload:0;}
   tick(dt:number){
@@ -11,9 +11,10 @@ export class WeaponState {
     if(this.reloadEmpty&&before<CONFIG.reloadEvents.bolt&&after>=CONFIG.reloadEvents.bolt)events|=4;
     return events;
   }
-  reload(){const c=CONFIG.weapons[this.id];if(this.id==='knife'||this.reloadLeft>0||this.mag===c.mag||!this.reserve)return false;this.reloadEmpty=this.mag===0;this.transferred=false;this.reloadLeft=c.reload;return true;}
+  reload(){const c=CONFIG.weapons[this.id];if(this.id==='knife'||this.reloadLeft>0||this.mag===c.mag||!this.reserve)return false;this.autoWait=0;this.reloadEmpty=this.mag===0;this.transferred=false;this.reloadLeft=c.reload;return true;}
+  automaticReload(dt:number,enabled:boolean,ready:boolean,sprinting=false){if(!enabled||!ready||this.id==='knife'||this.mag>0||this.reserve<=0||this.reloadLeft>0){this.autoWait=0;return false;}if(sprinting&&this.autoWait===0)this.autoWait=CONFIG.animation.sprintExit;if(this.autoWait>0){this.autoWait=Math.max(0,this.autoWait-dt);if(this.autoWait>1e-6)return false;}return this.reload();}
   fire(){if(this.cooldown>1e-6||this.reloadLeft>0||(this.id!=='knife'&&this.mag<=0))return false;this.cooldown=CONFIG.weapons[this.id].interval;if(this.id!=='knife')this.mag--;return true;}
-  cancelReload(){this.reloadLeft=0;}
+  cancelReload(){this.reloadLeft=this.autoWait=0;}
 }
 export type Team='blue'|'orange';
 export type Life={health:number;dead:number;protection:number;kills:number;deaths:number;team:Team;sinceDamage:number};
