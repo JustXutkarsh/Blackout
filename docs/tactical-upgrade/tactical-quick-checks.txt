@@ -1,0 +1,15 @@
+PASS RMB and X share aim intent; repeat does not toggle and release restores X state
+PASS sprint switching pause focus loss pointer loss death and respawn clear toggled aim
+PASS reload suspends ADS then restores valid toggle; overlays clear intent and cannot fire
+PASS assist uses actual visible enemies and never moves camera without mouse input
+PASS red dot is centered on camera aim in every stance and pistol keeps its own sights
+PASS confirmed firearm damage emits blood at authoritative hit point; shield friend wall and knife do not
+PASS blood Off keeps neutral particles, head marker and sound path; particles expire and remain bounded
+PASS repeated hits do not continually reset flinch or modify stance hitboxes
+PASS both tower stairs and landings are physically traversable in both directions
+PASS both tower entry graphs connect to the deck and map labels/footprints match
+PASS tower decks support standing crouch and prone; ceilings stop jumping and rails stop walking
+PASS tower deck sightlines cannot directly expose any opposing spawn
+PASS physical bot controller climbs and exits each tower using the live graph
+EXPOSURE []
+RESULT 13 passed / 0 failed

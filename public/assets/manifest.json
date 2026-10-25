@@ -170,6 +170,13 @@
     ],
     "runtime": "Generated locally at initialization; shared meshes/materials; no remote requests"
   },
+  "originalTacticalContent": {
+    "creator": "BLACKOUT project",
+    "source": "src/world.ts, src/actors.ts, src/characters.ts and src/game.ts",
+    "thirdParty": false,
+    "content": ["Ground-level stone courtyard and delivery area", "Compact rifle optic and pistol iron sights", "Navy/rust clothing patterns", "Pooled blood and neutral hit particles"],
+    "runtime": "Generated locally; existing CC0 texture maps reused; no new third-party assets"
+  },
   "characterAssets": [
     {
       "id": "quaternius-crew",

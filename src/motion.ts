@@ -1,7 +1,7 @@
 import {Vector3} from 'three';
 export type MotionKind='idle'|'walk'|'backward'|'strafe'|'run'|'sprint'|'crouch'|'crawl'|'air'|'land'|'turn';
 export class MotionState {
-  last=new Vector3();phase=0;speed=0;blend=0;land=0;hit=0;air=0;grounded=false;direction=0;kind:MotionKind='idle';lastYaw=0;
+  last=new Vector3();phase=0;speed=0;blend=0;land=0;hitSide=1;hit=0;air=0;grounded=false;direction=0;kind:MotionKind='idle';lastYaw=0;
   reset(pos:Vector3){this.last.copy(pos);this.phase=this.speed=this.blend=this.land=this.hit=this.air=this.direction=0;this.kind='idle';this.grounded=false;this.lastYaw=0;}
   tick(pos:Vector3,dt:number,grounded:boolean,crouch:number,prone:number,yaw:number,sprint=false){
     const dx=pos.x-this.last.x,dz=pos.z-this.last.z,d=Math.hypot(dx,dz);this.last.copy(pos);this.speed=d<1?d/Math.max(dt,.0001):0;const moving=this.speed>.08;

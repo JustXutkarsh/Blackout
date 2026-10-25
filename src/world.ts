@@ -12,14 +12,14 @@ export class World {
   landmarks:[string,number,number][]=[['KORA WAREHOUSE',0,0],['VILLAGE STREET',-20,-17],['TERRACED HILLSIDE',21,16],['CO-OP COURTYARD',0,13],['BLUE / SNOWLINE',0,22],['ORANGE / RIDGEBACK',0,-22],['NIMA FRUIT LANE',-35,-8],['JUNIPER COURT',-35,16],['MARKET STEPS',-30,7]];movingCloth:T.Mesh[]=[];dust?:T.Points;
   ambient=new T.HemisphereLight(0xc9dfff,0xb3a991,2.1);moon=new T.DirectionalLight(0xffe7c0,3.1);
   teamSpawns:Record<Team,T.Vector3[]>={blue:[],orange:[]};spawnPoints:T.Vector3[]=[];
-  routes=[[-14,0,16,-29,0,22,-34,.6,17,-34,0,3,-34,0,-12,-29,0,-17,-19,0,-6,-13,0,-15],[-6,0,13,-3,0,6,-3,0,-5,-6,0,-13],[20,0,21,20,2,10,16,2,0,20,2,-10,20,0,-21]].map(a=>{const out:T.Vector3[]=[];for(let i=0;i<a.length;i+=3)out.push(new T.Vector3(a[i],a[i+1],a[i+2]));return out;});
+  routes=[[-30,0,23,-34,.6,17,-34,0,3,-34,0,-12,-30,0,-23],[-6,0,13,-3,0,6,-3,0,-5,-6,0,-13],[20,0,21,20,2,10,16,2,0,20,2,-10,20,0,-21]].map(a=>{const out:T.Vector3[]=[];for(let i=0;i<a.length;i+=3)out.push(new T.Vector3(a[i],a[i+1],a[i+2]));return out;});
   private mats=new Map<string,T.MeshStandardMaterial>();private roofSheetMats=new Map<number,T.MeshStandardMaterial>(); private cube=new T.BoxGeometry(1,1,1);private barrelGeometry=new T.CylinderGeometry(.42,.42,1.1,10);private bandGeometry=new T.CylinderGeometry(.435,.435,.07,10);private rockGeometry=new T.DodecahedronGeometry(1,0);
   constructor(public scene:T.Scene) {
     scene.background=new T.Color(0x9dcce5);scene.fog=new T.FogExp2(0xb9d5df,.0035);scene.add(this.ambient,this.moon);this.moon.position.set(-30,55,20);
     this.moon.castShadow=true;this.moon.shadow.mapSize.set(1024,1024);Object.assign(this.moon.shadow.camera,{left:-46,right:36,top:32,bottom:-32,near:1,far:120});this.moon.shadow.bias=-.0015;
     for(const team of ['blue','orange'] as const)for(const z of [20.5,23])for(const x of [-8,-4,0,4,8])this.teamSpawns[team].push(new T.Vector3(x,0,z*(team==='blue'?1:-1)));
     this.spawnPoints=[...this.teamSpawns.blue,...this.teamSpawns.orange];
-    this.build();this.courtyardDetail();this.villageDetail();buildMarket(this);this.batchBoxes();this.nav=new Navigation(this.physics,this.bounds);
+    this.build();this.courtyardDetail();this.villageDetail();buildMarket(this);this.groundCourts();this.batchBoxes();this.nav=new Navigation(this.physics,this.bounds);
   }
   private batchBoxes(){
     const groups=new Map<string,T.Mesh[]>();
@@ -93,7 +93,7 @@ export class World {
     for(const [x,z,y] of [[-27,19,0],[-27,-20,0],[27,18,0],[27,-18,0],[27,3,2],[25,-12,2],[-28,4,0]])this.tree(x,z,y);
     // Painted boundaries read as village retaining walls; mountains remain decorative.
     this.box(-41.5,1.5,0,1,3,50,0x8f998c);this.box(29.5,3,0,1,6,50,0x8f998c);this.box(-6,2,-24.8,72,4,.6,0x929b8d);this.box(-6,2,24.8,72,4,.6,0x929b8d);
-    for(const x of [-27,-18,13,27])for(const z of [-18,18]){this.box(x,3.3,z,.15,6.6,.15,0x7c6c58);}
+    for(const x of [-27,13,27])for(const z of [-18,18]){this.box(x,3.3,z,.15,6.6,.15,0x7c6c58);}
     for(const z of [-18,18]){const pts=[];for(let i=0;i<=28;i++)pts.push(new T.Vector3(-27+i*1.93,6.6-Math.sin(i/28*Math.PI)*1.4,z));this.scene.add(new T.Line(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0x525b55})));for(let i=0;i<24;i++){const x=-25+i*2.1,y=6.6-Math.sin((x+27)/54*Math.PI)*1.4;this.box(x,y-.25,z,.55,.5,.035,[0x5285ad,0xd2a55a,0xb55f54,0x638f7b][i%4],false);}}
     this.mountains();
     this.pickup(-12,0,-8,'ammo');this.pickup(20,2,9,'ammo');this.pickup(0,0,12,'ammo');
@@ -188,8 +188,18 @@ export class World {
   }
 
   tree(x:number,z:number,y:number){this.box(x,y+1.5,z,.65,3,.65,0x7d6b4d);for(let i=0;i<3;i++){const tree=new T.Mesh(new T.ConeGeometry(2.2-i*.4,3.5,7),this.mat(0x52755e+i*0x080600));tree.position.set(x,y+3+i*1.1,z);this.scene.add(tree);}}
+  private groundCourts(){
+    for(const z of [-20,20]){this.floor(-20,z,7,6,0,0x9ca49a);for(let x=-23;x<-17;x+=1.05)for(let dz=-2.5;dz<3;dz+=1.05)this.box(x,.008,z+dz,1,.016,1,0x929c93,false);}
+    this.landmarks.push(['CEDAR COURT',-20,21],['CO-OP LOADING',-20,-21]);
+    for(const z of [18.5,22.3]){this.box(-22.7,.38,z,1.8,.76,1,0x9ca49a);this.box(-22.7,.78,z,1.9,.08,1.1,0x929c93);this.box(-22.7,.82,z,1.5,.04,.7,0xb7b39c,false);this.contact(-22.7,.025,z,2.2,1.4);}
+    this.box(-20,.48,22.5,2.3,.13,.65,0x9a7750);for(const x of [-20.8,-19.2])this.box(x,.22,22.5,.14,.44,.5,0x665b4d);this.contact(-20,.025,22.5,2.8,1);
+    const herbs=new T.ConeGeometry(.09,.28,5);for(const z of [18.5,22.3])for(const x of [-23.15,-22.7,-22.25]){const plant=new T.Mesh(herbs,this.mat(0x67784e));plant.position.set(x,.98,z);this.scene.add(plant);}
+    for(const z of [22.17,23.47])this.box(-22.74,.62,z,.055,1.24,.055,0x665b4d,false);for(const x of [-25.8,-23.4])this.box(x,.85,-23.85,.07,1.7,.07,0x665b4d,false);
+    this.crate(-18.2,19.6,0,.85);this.vehicle(-22,-20,0,0x648087);this.crate(-18.3,-22,0,1.1);this.crate(-18.3,-20.6,0,.8);
+    this.sign('CEDAR COURT',-22.7,1.13,22.82,1.7,.32,'#3d6064',Math.PI/2);this.sign('CO-OP / DELIVERIES',-24.6,1.5,-23.8,3,.45,'#5e6861');
+  }
   surfaceAt(p:T.Vector3):SurfaceAudio{for(let i=this.physics.boxes.length-1;i>=0;i--){const b=this.physics.boxes[i];if(p.x>=b.min.x-.12&&p.x<=b.max.x+.12&&p.z>=b.min.z-.12&&p.z<=b.max.z+.12&&p.y>=b.min.y-.12&&p.y<=b.max.y+.12)return p.y<.7&&b.max.y<.7&&b.max.x-b.min.x>3&&b.max.z-b.min.z>3?'dirt':this.kinds[i];}return 'stone';}
   update(dt:number,t:number,_low:boolean,reduced=false){for(let i=0;i<this.movingCloth.length;i++)this.movingCloth[i].rotation.z=reduced?0:Math.sin(t*.7+i)*.018;if(this.dust){this.dust.visible=!_low&&!reduced;this.dust.rotation.y=Math.sin(t*.05)*.01;}for(const p of this.pickups){p.mesh.visible=p.cooldown<=0;if(p.cooldown>0)p.cooldown=Math.max(0,p.cooldown-dt);p.mesh.position.y=p.pos.y+.18;}}
-  zone(p:T.Vector3){return p.x<-29?(p.z>9?'JUNIPER COURT':p.z<-15?'PASS REPAIR':'NIMA FRUIT LANE'):p.z>17?'SNOWLINE CAMP':p.z<-17?'RIDGEBACK CAMP':p.x>12?'TERRACED HILLSIDE':p.x<-12?'VILLAGE STREET':Math.abs(p.z)<9&&Math.abs(p.x)<9?'KORA WAREHOUSE':'CO-OP COURTYARD';}
+  zone(p:T.Vector3){if(p.x<-16&&p.x>-25&&Math.abs(p.z)>17)return p.z>0?'CEDAR COURT':'CO-OP LOADING';return p.x<-29?(p.z>9?'JUNIPER COURT':p.z<-15?'PASS REPAIR':'NIMA FRUIT LANE'):p.z>17?'SNOWLINE CAMP':p.z<-17?'RIDGEBACK CAMP':p.x>12?'TERRACED HILLSIDE':p.x<-12?'VILLAGE STREET':Math.abs(p.z)<9&&Math.abs(p.x)<9?'KORA WAREHOUSE':'CO-OP COURTYARD';}
   dispose(){disposeSurfaceMaps();this.scene.traverse(o=>{if(o instanceof T.Mesh || o instanceof T.Line || o instanceof T.Points){o.geometry.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material]){if('map'in m)(m as T.MeshStandardMaterial).map?.dispose();m.dispose();}}});}
 }

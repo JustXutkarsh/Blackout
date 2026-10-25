@@ -1,0 +1,15 @@
+PASS RMB and X share aim intent; repeat does not toggle and release restores X state
+PASS sprint switching pause focus loss pointer loss death and respawn clear toggled aim
+PASS reload suspends ADS then restores valid toggle; overlays clear intent and cannot fire
+PASS assist uses actual visible enemies and never moves camera without mouse input
+PASS red dot is centered on camera aim in every stance and pistol keeps its own sights
+PASS red-dot center actually renders red through the optic lens
+PASS pistol RMB/X aim aligns both iron sights and restores after reload in every posture
+PASS confirmed firearm damage emits blood at authoritative hit point; shield friend wall and knife do not
+PASS blood Off keeps neutral particles, head marker and sound path; particles expire and remain bounded
+PASS repeated hits do not continually reset flinch or modify stance hitboxes
+PASS vacated courts have ground, connected navigation and no elevated remnants
+PASS short drop beside balcony ramp remains collision-free and never kills
+PASS player and bot landings apply fall damage once with environmental attribution and a diagnostic record
+PASS sampled map nodes survive jumping and supported landings without environmental deaths
+RESULT 14 passed / 0 failed

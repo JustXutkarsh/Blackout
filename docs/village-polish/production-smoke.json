@@ -1,0 +1,29 @@
+{
+  "environment": "local production preview in embedded Chromium 156",
+  "materialsLoaded": 15,
+  "materialFailures": 0,
+  "characters": "ready",
+  "characterLoadMs": 663.3,
+  "materialLoadMs": 1059.4,
+  "aimAndBloodSettingsPersisted": true,
+  "originalPreferencesRestored": true,
+  "aimHelpVerified": true,
+  "matchInitialized": true,
+  "pointerLock": "rejected by embedded browser; remained paused",
+  "pausedMapClose": "returned to pause with 30/120 ammunition",
+  "mapViewportCheck": {
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "panel": [
+      87,
+      53.9921875,
+      850,
+      660.015625
+    ],
+    "fits": true,
+    "overrideReset": true
+  },
+  "consoleErrors": []
+}

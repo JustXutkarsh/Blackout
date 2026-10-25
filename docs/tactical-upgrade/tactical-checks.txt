@@ -1,0 +1,21 @@
+PASS RMB and X share aim intent; repeat does not toggle and release restores X state
+PASS sprint switching pause focus loss pointer loss death and respawn clear toggled aim
+PASS reload suspends ADS then restores valid toggle; overlays clear intent and cannot fire
+PASS assist uses actual visible enemies and never moves camera without mouse input
+PASS red dot is centered on camera aim in every stance and pistol keeps its own sights
+PASS confirmed firearm damage emits blood at authoritative hit point; shield friend wall and knife do not
+PASS blood Off keeps neutral particles, head marker and sound path; particles expire and remain bounded
+PASS repeated hits do not continually reset flinch or modify stance hitboxes
+PASS both tower stairs and landings are physically traversable in both directions
+PASS both tower entry graphs connect to the deck and map labels/footprints match
+PASS tower decks support standing crouch and prone; ceilings stop jumping and rails stop walking
+PASS tower deck sightlines cannot directly expose any opposing spawn
+PASS physical bot controller climbs and exits each tower using the live graph
+EXPOSURE []
+SIMULATION {"seed":90210,"elapsed":180.00000000003539,"seconds":[0,0,0,19.5,0,0,74.3,0],"entries":[0,0,0,4,0,0,7,0],"zoneVisits":{"SNOWLINE CAMP":28,"RIDGEBACK CAMP":28,"CO-OP COURTYARD":51,"KORA WAREHOUSE":29,"TERRACED HILLSIDE":22,"PASS REPAIR":7,"JUNIPER COURT":9,"NIMA FRUIT LANE":11,"RIDGEBACK LOOKOUT":2,"VILLAGE STREET":3}}
+PASS seed 90210: both teams actually visit the fruit market
+SIMULATION {"seed":17,"elapsed":180.00000000003539,"seconds":[0,0,0,26.7,0,0,39.7,0],"entries":[0,0,0,5,0,0,5,0],"zoneVisits":{"SNOWLINE CAMP":28,"RIDGEBACK CAMP":33,"CO-OP COURTYARD":42,"KORA WAREHOUSE":24,"TERRACED HILLSIDE":19,"PASS REPAIR":9,"JUNIPER COURT":6,"NIMA FRUIT LANE":10,"SNOWLINE LOOKOUT":6,"VILLAGE STREET":16,"RIDGEBACK LOOKOUT":1}}
+PASS seed 17: both teams actually visit the fruit market
+SIMULATION {"seed":451,"elapsed":180.00000000003539,"seconds":[0,0,0,10.5,0,0,53.4,0],"entries":[0,0,0,2,0,0,6,0],"zoneVisits":{"SNOWLINE CAMP":41,"RIDGEBACK CAMP":30,"CO-OP COURTYARD":47,"KORA WAREHOUSE":20,"TERRACED HILLSIDE":20,"PASS REPAIR":11,"JUNIPER COURT":9,"NIMA FRUIT LANE":8,"VILLAGE STREET":5,"RIDGEBACK LOOKOUT":2}}
+PASS seed 451: both teams actually visit the fruit market
+RESULT 16 passed / 0 failed

@@ -23,3 +23,7 @@ Three.js and its RoundedBoxGeometry / RoomEnvironment addons are MIT licensed; s
 - **Rob Tuytel — [Denim Fabric](https://polyhaven.com/a/denim_fabric), Poly Haven.** CC0 1.0. Local 1K base color, OpenGL normal and roughness maps. Applied with meter-scaled rest-space UVs and subdued jacket/jean/glove tints.
 
 Runtime files are `crew-base.glb`, `crew-motion.glb` and three denim JPEGs, bundled locally under `public/assets/characters/`. Body image maps were optimized to 1K; eye/hair maps to 256px. New clothing region geometry, cuffs, boots/soles, scarves, pockets, zipper, team patterns, first-person arm cropping, IK constraints and code are BLACKOUT project modifications. Source URLs, mirror revision, modifications and output SHA-256 hashes are in `public/assets/manifest.json` under `characterAssets`. No hotlinked runtime asset, extracted commercial-game content, paid dependency or external character service is used.
+
+The tactical upgrade reuses the same locally bundled CC0 assets. Its red-dot optic, ground-level courtyard/loading-area geometry, navy/rust garment palettes and scarf patterns, teammate diamonds, and pooled blood/neutral impact effects are original project geometry/code. No new third-party asset or dependency was added.
+
+The village polish pass rebuilds the compact optic and pistol iron sights from original geometry, reuses the existing licensed PBR maps, and adds original ground-level paving, planters and signage. No new third-party model, texture, sound or dependency was introduced.

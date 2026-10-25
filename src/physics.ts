@@ -1,8 +1,9 @@
 import { Box3, Vector3 } from 'three';
 import { CONFIG } from './config';
+import type { FallState } from './rules';
 export type Ramp = { x1: number; x2: number; z1: number; z2: number; low: number; high: number; reverse?: boolean };
 export type Surface = { x1: number; x2: number; z1: number; z2: number; y: number };
-export type Body = { pos: Vector3; vel: Vector3; grounded: boolean; height?:number; yaw?:number; stance?:{elongated:boolean} };
+export type Body = { pos: Vector3; vel: Vector3; grounded: boolean; height?:number; yaw?:number; stance?:{elongated:boolean}; fall?:FallState };
 const AXES=['x','y','z'] as const;
 export function bodyEye(height:number,crouched:boolean,current:number,dt:number) {
   const target=crouched?CONFIG.player.crouchEye:CONFIG.player.eye;
@@ -14,7 +15,7 @@ export class Physics {
   addBox(x: number, y: number, z: number, w: number, h: number, d: number) { this.boxes.push(new Box3(new Vector3(x-w/2,y-h/2,z-d/2),new Vector3(x+w/2,y+h/2,z+d/2))); }
   rampY(r: Ramp, z: number) { const t = Math.max(0, Math.min(1, (z-r.z1)/(r.z2-r.z1))); return r.low + (r.high-r.low) * (r.reverse ? t : 1-t); }
   inRect(x: number,z: number,r: {x1:number;x2:number;z1:number;z2:number}, pad=0) { return x >= r.x1-pad && x <= r.x2+pad && z >= r.z1-pad && z <= r.z2+pad; }
-  floor(x:number,z:number, maxY:number, radius=0) { let y=-100; for (const b of this.boxes) if (x+radius >= b.min.x && x-radius <= b.max.x && z+radius >= b.min.z && z-radius <= b.max.z && b.max.y <= maxY+.38) y=Math.max(y,b.max.y); for(const r of this.ramps) if(this.inRect(x,z,r) && this.rampY(r,z)<=maxY+.4) y=Math.max(y,this.rampY(r,z)); return y; }
+  floor(x:number,z:number, maxY:number, radius=0) { let y=-100; for (const b of this.boxes) if (x+radius >= b.min.x && x-radius <= b.max.x && z+radius >= b.min.z && z-radius <= b.max.z && b.max.y <= maxY+.38) y=Math.max(y,b.max.y); for(const r of this.ramps){const dx=Math.max(r.x1-x,0,x-r.x2),dz=Math.max(r.z1-z,0,z-r.z2),top=this.rampY(r,Math.max(r.z1,Math.min(r.z2,z)));if(dx<=radius&&dz<=radius&&top<=maxY+.4)y=Math.max(y,top);} return y; }
   blocked(x:number,y:number,z:number,radius:number=CONFIG.player.radius,height:number=CONFIG.player.height) { for (const b of this.boxes) if(y+height>b.min.y+.015 && y<b.max.y-.32 && x+radius>b.min.x && x-radius<b.max.x && z+radius>b.min.z && z-radius<b.max.z) return true; for(const r of this.ramps) if(this.inRect(x,z,r,radius-.001) && y+height>r.low-.2+.015 && this.rampY(r,Math.max(r.z1,Math.min(r.z2,z)))>y+.4) return true; return false; }
   supported(pos:Vector3,height:number=CONFIG.player.height) {
     if(!Number.isFinite(pos.x+pos.y+pos.z))return false;
@@ -43,6 +44,7 @@ export class Physics {
   move(body:Body, dt:number) {
     if(!Number.isFinite(body.pos.lengthSq()+body.vel.lengthSq())){body.pos.y=-100;body.vel.set(0,0,0);body.grounded=false;return;}
     // Also guard callers outside the main fixed-step loop (stalls / test / tools).
+    body.fall?.update(body.pos.y,body.grounded,body.vel.y);
     let remaining=Math.min(.5,Math.max(0,dt));
     while(remaining>1e-8){const speed=Math.max(1,Math.abs(body.vel.x),Math.abs(body.vel.y),Math.abs(body.vel.z));const step=Math.min(remaining,1/120,.12/speed);this.moveStep(body,step);remaining-=step;}
   }
@@ -57,7 +59,9 @@ export class Physics {
     if(vel.y>0) for(const b of this.boxes) if(pos.x+radius>b.min.x && pos.x-radius<b.max.x && pos.z+radius>b.min.z && pos.z-radius<b.max.z && oldY+height<=b.min.y+.01 && pos.y+height>=b.min.y) {pos.y=b.min.y-height;vel.y=0;}
     floor=this.floor(pos.x,pos.z,Math.max(oldY,pos.y),radius);
     body.grounded=vel.y<=0 && pos.y<=floor+.015;
-    if(body.grounded) {pos.y=floor;vel.y=0;}
+    if(body.grounded)pos.y=floor;
+    body.fall?.update(pos.y,body.grounded,vel.y);
+    if(body.grounded)vel.y=0;
   }
   traversable(a:Vector3,b:Vector3) {
     const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.15)),dt=1/60;
@@ -78,13 +82,16 @@ export class Physics {
 export function rayBox(o:Vector3,d:Vector3,b:Box3):number|null { let near=-Infinity,far=Infinity; for(const a of AXES) {if(Math.abs(d[a])<1e-9){if(o[a]<b.min[a]||o[a]>b.max[a])return null;}else {let t1=(b.min[a]-o[a])/d[a],t2=(b.max[a]-o[a])/d[a];if(t1>t2)[t1,t2]=[t2,t1];near=Math.max(near,t1);far=Math.min(far,t2);if(near>far)return null;}} return far<0?null:Math.max(0,near); }
 export class Navigation {
   nodes:Vector3[]=[]; edges:number[][]=[];
+  private anchorIds=new Int32Array(8);private anchorCosts=new Float64Array(8);
   constructor(public physics:Physics,bounds={minX:-30,maxX:30,minZ:-25,maxZ:25}) {
     const step=1.5, lookup=new Map<string,number[]>();
     for(let x=Math.ceil((bounds.minX+1)/step)*step;x<bounds.maxX-1;x+=step)for(let z=Math.ceil((bounds.minZ+1)/step)*step;z<bounds.maxZ-1;z+=step){ const heights=new Set<number>(); for(const s of physics.surfaces)if(physics.inRect(x,z,s))heights.add(s.y);for(const r of physics.ramps)if(physics.inRect(x,z,r))heights.add(physics.rampY(r,z));for(const y of heights){if(physics.blocked(x,y,z))continue;const i=this.nodes.length;this.nodes.push(new Vector3(x,y,z));this.edges.push([]);const key=`${x},${z}`;lookup.set(key,[...(lookup.get(key)||[]),i]);}}
     this.nodes.forEach((p,i)=>{for(const [dx,dz] of [[step,0],[-step,0],[0,step],[0,-step],[step,step],[-step,step],[step,-step],[-step,-step]])for(const j of lookup.get(`${p.x+dx},${p.z+dz}`)||[]){const q=this.nodes[j];if(Math.abs(p.y-q.y)<=.9&&physics.traversable(p,q))this.edges[i].push(j);}});
   }
+  connect(paths:Vector3[][]){const original=this.nodes.length,anchors=new Set<number>();const link=(i:number,j:number)=>{if(i!==j&&!this.edges[i].includes(j)&&this.physics.traversable(this.nodes[i],this.nodes[j]))this.edges[i].push(j);};for(const path of paths){let previous=-1;for(const p of path){let i=this.nodes.findIndex(n=>n.distanceToSquared(p)<.0001);if(i<0){i=this.nodes.length;this.nodes.push(p.clone());this.edges.push([]);}anchors.add(i);if(previous>=0){link(previous,i);link(i,previous);}previous=i;}}for(const i of anchors)for(let j=0;j<original;j++)if(Math.abs(this.nodes[i].y-this.nodes[j].y)<.9&&this.nodes[i].distanceToSquared(this.nodes[j])<4.5){link(i,j);link(j,i);}}
   nearest(p:Vector3) { let best=0,d=Infinity;this.nodes.forEach((n,i)=>{const v=n.distanceToSquared(p)+(Math.abs(n.y-p.y)>1?200:0);if(v<d){d=v;best=i;}});return best; }
-  path(from:Vector3,to:Vector3):Vector3[] {const start=this.nearest(from),goal=this.nearest(to),open=new Set([start]),came=new Map<number,number>(),g=new Map([[start,0]]),f=new Map([[start,0]]);let closest=start;
+  private reachableAnchor(p:Vector3){this.anchorIds.fill(-1);this.anchorCosts.fill(Infinity);for(let i=0;i<this.nodes.length;i++){const n=this.nodes[i],cost=n.distanceToSquared(p)+(Math.abs(n.y-p.y)>.4?100:0);for(let k=0;k<8;k++)if(cost<this.anchorCosts[k]){for(let j=7;j>k;j--){this.anchorCosts[j]=this.anchorCosts[j-1];this.anchorIds[j]=this.anchorIds[j-1];}this.anchorCosts[k]=cost;this.anchorIds[k]=i;break;}}for(const id of this.anchorIds)if(id>=0&&this.physics.traversable(p,this.nodes[id]))return id;return -1;}
+  path(from:Vector3,to:Vector3):Vector3[] {const start=this.reachableAnchor(from);if(start<0)return [];const goal=this.nearest(to),open=new Set([start]),came=new Map<number,number>(),g=new Map([[start,0]]),f=new Map([[start,0]]);let closest=start;
     while(open.size){let current=-1,best=Infinity;for(const i of open)if((f.get(i)??Infinity)<best){best=f.get(i)!;current=i;}if(current<0)break;if(this.nodes[current].distanceToSquared(to)<this.nodes[closest].distanceToSquared(to))closest=current;if(current===goal){closest=goal;break;}open.delete(current);for(const next of this.edges[current]){const cost=g.get(current)!+this.nodes[current].distanceTo(this.nodes[next]);if(cost<(g.get(next)??Infinity)){came.set(next,current);g.set(next,cost);f.set(next,cost+this.nodes[next].distanceTo(this.nodes[goal]));open.add(next);}}}
     const result:Vector3[]=[];let node=closest;while(node!==start&&came.has(node)){result.unshift(this.nodes[node]);node=came.get(node)!;}if(from.distanceTo(this.nodes[start])>.12)result.unshift(this.nodes[start]);return result;
   }

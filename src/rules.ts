@@ -1,4 +1,11 @@
 import { CONFIG, type WeaponId } from './config';
+export function fallDamage(metres:number){const t=Math.max(0,Math.min(1,(metres-CONFIG.falls.safeMetres)/(CONFIG.falls.lethalMetres-CONFIG.falls.safeMetres)));return CONFIG.maxHealth*t*t*(3-2*t);}
+export class FallState {
+  peak=0;active=false;distance=0;velocity=0;pending=0;
+  reset(y:number){this.peak=y;this.active=false;this.distance=this.velocity=this.pending=0;}
+  update(y:number,grounded:boolean,velocity:number){if(!grounded){if(!this.active){this.peak=y;this.velocity=this.distance=0;this.active=true;}this.peak=Math.max(this.peak,y);this.velocity=Math.min(this.velocity,velocity);}else{if(this.active){this.distance=Math.max(0,this.peak-y);this.pending=Math.max(this.pending,fallDamage(this.distance));this.velocity=Math.min(this.velocity,velocity);}this.peak=y;this.active=false;}}
+  consume(){const n=this.pending;this.pending=0;return n;}
+}
 export class WeaponState {
   mag:number; reserve:number; cooldown=0; reloadLeft=0; reloadEmpty=false; transferred=false;autoWait=0;
   constructor(public id:WeaponId){this.mag=CONFIG.weapons[id].mag;this.reserve=CONFIG.weapons[id].reserve;}

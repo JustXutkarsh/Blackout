@@ -1,0 +1,22 @@
+21 production paths and SHA-256 hashes passed
+dist/assets/materials/stone_wall_02_diff.jpg
+dist/assets/materials/stone_wall_02_nor_gl.jpg
+dist/assets/materials/stone_wall_02_rough.jpg
+dist/assets/materials/wood_planks_dirt_diff.jpg
+dist/assets/materials/wood_planks_dirt_nor_gl.jpg
+dist/assets/materials/wood_planks_dirt_rough.jpg
+dist/assets/materials/brown_mud_dry_diff.jpg
+dist/assets/materials/brown_mud_dry_nor_gl.jpg
+dist/assets/materials/brown_mud_dry_rough.jpg
+dist/assets/materials/rusty_metal_diff.jpg
+dist/assets/materials/rusty_metal_nor_gl.jpg
+dist/assets/materials/rusty_metal_rough.jpg
+dist/assets/materials/grey_plaster_03_diff.jpg
+dist/assets/materials/grey_plaster_03_nor_gl.jpg
+dist/assets/materials/grey_plaster_03_rough.jpg
+dist/assets/characters/crew-base.glb
+dist/assets/characters/crew-motion.glb
+dist/assets/characters/CC0-Quaternius.txt
+dist/assets/characters/denim_diff.jpg
+dist/assets/characters/denim_nor_gl.jpg
+dist/assets/characters/denim_rough.jpg

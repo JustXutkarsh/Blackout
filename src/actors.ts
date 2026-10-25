@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { surfaceMaterial,contactMaterial } from './materials';
-import { WeaponState, type Team } from './rules';
+import { WeaponState, FallState, type Team } from './rules';
 import { Stance } from './stance';
 import {MotionState} from './motion';
 import {CrewRig,type CrewAssets} from './characters';
@@ -9,6 +9,7 @@ import type {Physics} from './physics';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import { CONFIG, type WeaponId } from './config';
 export class Actor {
+  fall=new FallState();patrolZone='';zoneVisits:Record<string,number>={};lastFlinch=-1;
   aimPitch=0;motion=new MotionState();character?:CrewRig;visualBudget=0;
   installCharacter(assets:CrewAssets,scene:T.Scene){this.character=new CrewRig(assets,createViewWeapon('rifle'),this.id,this.team);this.character.addWeapon('pistol',createViewWeapon('pistol'));this.character.addWeapon('knife',createViewWeapon('knife'));scene.add(this.character.root);this.character.vary();}
   advanceAnimation(dt:number,sprint=false){return this.motion.tick(this.pos,dt,this.grounded,this.stance.crouch,this.stance.prone,this.yaw,sprint);}
@@ -16,7 +17,7 @@ export class Actor {
   weapons={rifle:new WeaponState('rifle'),pistol:new WeaponState('pistol'),knife:new WeaponState('knife')};active:WeaponId='rifle';
   contact=new T.Mesh(new T.PlaneGeometry(.9,.7),contactMaterial());mesh=new T.Group();posture=new T.Group();rig=new T.Group();legs:T.Group[]=[];knees:T.Group[]=[];torso=new T.Group();aimRig=new T.Group();gait=0;visualPos=new T.Vector3();flash:T.Mesh;shield:T.Mesh;target=-1;memory?:T.Vector3;memoryUntil=0;path:T.Vector3[]=[];repath=0;reaction=0;think=0;step=0;state='PATROL';stuck=0;lastPos=new T.Vector3();lastSafe=new T.Vector3();invalidTime=0;yaw=0;shots=0;hits=0;
   constructor(public id:number,public name:string,color:number,scene:T.Scene,public team:Team='blue'){
-    const cloth=new T.MeshStandardMaterial({color:team==='blue'?0x586d78:0x927b60,roughness:.95}),dark=new T.MeshStandardMaterial({color:0x343a36,roughness:.9}),skin=new T.MeshStandardMaterial({color:id%2?0xb38563:0x926a4e,roughness:.8}),trim=new T.MeshStandardMaterial({color,roughness:.82});
+    const cloth=new T.MeshStandardMaterial({color:team==='blue'?0x486c91:0xb66b47,roughness:.95}),dark=new T.MeshStandardMaterial({color:0x343a36,roughness:.9}),skin=new T.MeshStandardMaterial({color:id%2?0xb38563:0x926a4e,roughness:.8}),trim=new T.MeshStandardMaterial({color,roughness:.82});
     const add=(g:T.BufferGeometry,m:T.Material,x:number,y:number,z:number,parent:T.Object3D=this.mesh,shadow=true)=>{const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=shadow;parent.add(o);return o;};
     const rounded=(w:number,h:number,d:number)=>new RoundedBoxGeometry(w,h,d,1,.035);
     const limb=(r:number,length:number,m:T.Material,parent:T.Object3D,x:number,y:number,z:number)=>add(new T.CapsuleGeometry(r,length,3,7),m,x,y,z,parent);
@@ -43,7 +44,7 @@ export class Actor {
   }
 
   get weapon(){return this.weapons[this.active];}
-  reset(pos:T.Vector3){this.aimPitch=0;this.motion.reset(pos);this.character?.reset();this.visualBudget=0;this.pos.copy(pos);this.vel.set(0,0,0);this.grounded=false;this.health=CONFIG.maxHealth;this.sinceDamage=0;this.switchLeft=0;this.stance.reset();this.lastKiller='';this.routeIndex=0;this.retreatUntil=0;this.lastRetreat=-30;this.shotTime=-10;this.dead=0;this.protection=CONFIG.protectionSeconds;this.active='rifle';this.weapons={rifle:new WeaponState('rifle'),pistol:new WeaponState('pistol'),knife:new WeaponState('knife')};this.state='PATROL';this.think=0;this.path=[];this.target=-1;this.memory=undefined;this.memoryUntil=0;this.reaction=.7;this.repath=0;this.stuck=0;this.lastPos.copy(pos);this.lastSafe.copy(pos);this.invalidTime=0;this.visualPos.copy(pos);this.gait=0;this.step=0;this.flash.visible=false;this.mesh.position.copy(pos);}
+  reset(pos:T.Vector3){this.fall.reset(pos.y);this.patrolZone='';this.lastFlinch=-1;this.aimPitch=0;this.motion.reset(pos);this.character?.reset();this.visualBudget=0;this.pos.copy(pos);this.vel.set(0,0,0);this.grounded=false;this.health=CONFIG.maxHealth;this.sinceDamage=0;this.switchLeft=0;this.stance.reset();this.lastKiller='';this.routeIndex=0;this.retreatUntil=0;this.lastRetreat=-30;this.shotTime=-10;this.dead=0;this.protection=CONFIG.protectionSeconds;this.active='rifle';this.weapons={rifle:new WeaponState('rifle'),pistol:new WeaponState('pistol'),knife:new WeaponState('knife')};this.state='PATROL';this.think=0;this.path=[];this.target=-1;this.memory=undefined;this.memoryUntil=0;this.reaction=.7;this.repath=0;this.stuck=0;this.lastPos.copy(pos);this.lastSafe.copy(pos);this.invalidTime=0;this.visualPos.copy(pos);this.gait=0;this.step=0;this.flash.visible=false;this.mesh.position.copy(pos);}
   animate(t:number,moving:boolean,dt=0,physics?:Physics,reduced=false,far=false){
     const distance=this.pos.distanceTo(this.visualPos);if(distance<1&&moving)this.gait+=distance*7;this.visualPos.copy(this.pos);
     this.contact.position.copy(this.pos).y+=.023;this.contact.visible=this.id!==0&&this.health>0&&this.grounded;this.mesh.position.copy(this.pos);this.mesh.rotation.set(0,this.yaw,0);const deadAge=CONFIG.respawnSeconds-this.dead;
@@ -76,21 +77,32 @@ export function createViewWeapon(id:WeaponId){
     mag.position.set(0,-.115,-.105);profile([[-.065,.02],[.065,.02],[.095,-.13],[.16,-.29],[.055,-.32],[-.025,-.18]],.074,metal,mag);
     for(const x of [-.041,.041])for(let i=0;i<3;i++)part(x,-.13,.018+i*.027,.005,.16,.007,black,mag);
     bolt.position.set(.065,.025,.09);tube(0,0,0,.012,.075,metal,bolt).rotation.z=Math.PI/2;
-    part(0,.123,.13,.09,.014,.06);for(const x of [-.032,.032])part(x,.15,.13,.018,.04,.035);part(0,.145,-.75,.009,.045,.014,sight);part(0,.1,-.75,.065,.045,.03);
+    part(0,.116,.13,.085,.012,.05);for(const x of [-.032,.032])part(x,.127,.13,.014,.02,.028,black);part(0,.138,-.75,.008,.026,.014,black);part(0,.145,-.741,.005,.007,.002,sight);part(0,.1,-.75,.065,.045,.03);
+    const optic=new T.Group(),housing=new T.MeshStandardMaterial({color:0x30383a,metalness:.65,roughness:.48});optic.name='compact-red-dot';root.add(optic);
+    part(0,.118,-.205,.078,.018,.105,black,optic);part(0,.137,-.205,.055,.025,.06,housing,optic);
+    const sleeve=new T.Mesh(new T.CylinderGeometry(.043,.043,.07,24,1,true),housing);sleeve.rotation.x=Math.PI/2;sleeve.position.set(0,CONFIG.rifleSight,-.205);optic.add(sleeve);
+    for(const z of [-.17,-.24]){const rim=new T.Mesh(new T.TorusGeometry(.043,.0035,6,28),housing);rim.position.set(0,CONFIG.rifleSight,z);optic.add(rim);}
+    const dial=tube(.054,CONFIG.rifleSight,-.205,.012,.025,housing,optic);dial.rotation.set(0,0,Math.PI/2);
+    for(const x of [-.034,.034])part(x,.12,-.16,.009,.012,.017,housing,optic);
+    const glass=new T.Mesh(new T.CircleGeometry(.0385,28),new T.MeshBasicMaterial({color:0xdce9e7,transparent:true,opacity:.018,depthWrite:false,side:T.DoubleSide}));glass.position.set(0,CONFIG.rifleSight,-.239);optic.add(glass);
+    const dot=new T.Mesh(new T.CircleGeometry(.0019,16),new T.MeshBasicMaterial({color:0xff291c,transparent:true,toneMapped:false,depthTest:true,depthWrite:false}));dot.position.set(0,CONFIG.rifleSight,-.241);dot.renderOrder=3;dot.visible=false;optic.add(dot);root.userData.reticle=dot;
     for(const z of [-.17,.05,.18])for(const x of [-.055,.055]){const pin=tube(x,0,z,.008,.006);pin.rotation.z=Math.PI/2;}
   }else if(id==='pistol'){
     part(0,0,-.05,.105,.13,.34,metal,bolt);tube(0,-.003,-.228,.025,.028);part(0,-.083,-.03,.1,.04,.29,black);
     profile([[.01,-.08],[.12,-.07],[.16,-.3],[.04,-.31]],.09,black);
     mag.position.set(0,-.29,.09);part(0,0,0,.1,.03,.14,black,mag);part(0,.06,0,.07,.17,.1,metal,mag);
     for(let i=0;i<7;i++)for(const x of [-.056,.056])part(x,.015,.065+i*.01,.006,.09,.004,black,bolt);
-    for(const x of [-.037,.037])part(x,.11,.1,.018,.04,.028,metal,bolt);part(0,.11,-.2,.012,.04,.02,sight,bolt);
+    part(0,.072,.1,.09,.014,.032,black,bolt);
+    for(const x of [-.031,.031]){part(x,.089,.1,.014,.028,.024,black,bolt);part(x,.089,.113,.005,.005,.002,sight,bolt);}
+    part(0,.084,-.2,.012,.038,.022,black,bolt);part(0,.09,-.188,.006,.012,.002,sight,bolt);
+    root.userData.frontSight=new T.Vector3(0,CONFIG.pistolSight,-.2);root.userData.rearSight=new T.Vector3(0,CONFIG.pistolSight,.1);
     const guard=new T.Mesh(new T.TorusGeometry(.046,.007,5,12),black);guard.rotation.y=Math.PI/2;guard.position.set(0,-.13,-.055);root.add(guard);
   }else{mag.visible=false;part(0,-.13,.12,.07,.085,.26,black);for(let i=0;i<7;i++)part(0,-.13,.02+i*.03,.078,.092,.009,metal);part(0,-.13,-.04,.19,.025,.04);profile([[-.06,-.115],[-.4,-.115],[-.55,-.15],[-.4,-.18],[-.06,-.17]],.018,new T.MeshStandardMaterial({color:0xb5c0bd,metalness:.85,roughness:.3}));}
   const hands:T.Group[]=[];const hand=(x:number,y:number,z:number)=>{const g=new T.Group();g.position.set(x,y,z);root.add(g);hands.push(g);part(0,0,0,.105,.085,.14,black,g);const thumb=part(-.056,.018,-.015,.042,.045,.09,skin,g);thumb.rotation.y=-.35;for(let i=0;i<4;i++){const finger=part(-.038+i*.025,-.043,-.04,.022,.04,.07,skin,g);finger.rotation.x=-.3;}part(0,0,.085,.11,.09,.07,black,g);return g;};
   hand(.015,-.17,.14);const support=hand(-.065,id==='rifle'?-.075:-.2,id==='rifle'?-.37:.07);
   const arm=new T.Mesh(new T.CylinderGeometry(.052,.072,1,10),black);root.add(arm);
   const right=new T.Mesh(new T.CylinderGeometry(.055,.085,.46,10),black);right.position.set(.105,-.33,.36);right.rotation.x=-.75;right.rotation.z=.2;root.add(right);const cuff=part(.14,-.46,.51,.17,.16,.22,black);cuff.rotation.x=-.7;
-  root.userData={mag,bolt,support,arm,right,cuff,hands,magRest:mag.position.clone(),handRest:support.position.clone(),id};const batches=new Map<T.Material,T.BufferGeometry[]>();for(const o of [...root.children])if(o instanceof T.Mesh&&o!==arm&&o!==right&&o!==cuff){o.updateMatrix();const g=(o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrix),m=o.material as T.Material;batches.set(m,[...(batches.get(m)||[]),g]);root.remove(o);o.geometry.dispose();}for(const [m,geometries] of batches){const mesh=new T.Mesh(mergeGeometries(geometries,false)!,m);mesh.castShadow=true;root.add(mesh);geometries.forEach(g=>g.dispose());}root.scale.setScalar(.82);root.position.set(.28,-.25,-.7);return root;
+  root.userData={...root.userData,mag,bolt,support,arm,right,cuff,hands,magRest:mag.position.clone(),handRest:support.position.clone(),id};const batches=new Map<T.Material,T.BufferGeometry[]>();for(const o of [...root.children])if(o instanceof T.Mesh&&o!==arm&&o!==right&&o!==cuff){o.updateMatrix();const g=(o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrix),m=o.material as T.Material;batches.set(m,[...(batches.get(m)||[]),g]);root.remove(o);o.geometry.dispose();}for(const [m,geometries] of batches){const mesh=new T.Mesh(mergeGeometries(geometries,false)!,m);mesh.castShadow=true;root.add(mesh);geometries.forEach(g=>g.dispose());}root.scale.setScalar(.82);root.position.set(.28,-.25,-.7);return root;
 }
 
 const handOffset=new T.Vector3(-.075,-.035,.04);
@@ -101,7 +113,8 @@ export function animateView(root:T.Group,w:WeaponState,pose:{ads:number;sprint:b
   const inspection=reloading?Math.sin(p*Math.PI):0;
   const bob=pose.reduced?0:Math.sin(pose.bob)*.009*(1-(pose.prone??0)*.8),idle=pose.reduced?0:Math.sin(pose.time*1.8)*.002;
   const shot=Math.max(0,1-pose.shotAge/(id==='knife'?.25:.1));const ads=pose.ads;
-  root.position.set(T.MathUtils.lerp(.27,0,ads)+bob*(1-ads)-inspection*.12,T.MathUtils.lerp(-.29,(id==='rifle'?-.1675:-.13)*.82,ads)+inspection*.13-lower-switchDip+idle*(1-ads)-(pose.reduced?0:Math.sin(Math.PI*(1-(pose.land??0)/.2))*.025*(pose.land?1:0))*(1-ads)-(pose.wall??0)*.14-(pose.prone??0)*.025*(1-ads),-.6+ads*.14-inspection*.18+(id==='knife'?0:shot*.045));
+  if(root.userData.reticle)root.userData.reticle.visible=pose.ads>.8;
+  root.position.set(T.MathUtils.lerp(.27,0,ads)+bob*(1-ads)-inspection*.12,T.MathUtils.lerp(-.29,(id==='rifle'?-CONFIG.rifleSight:-CONFIG.pistolSight)*.82,ads)+inspection*.13-lower-switchDip+idle*(1-ads)-(pose.reduced?0:Math.sin(Math.PI*(1-(pose.land??0)/.2))*.025*(pose.land?1:0))*(1-ads)-(pose.wall??0)*.14-(pose.prone??0)*.025*(1-ads),-.6+ads*.14-inspection*.18+(id==='knife'?0:shot*.045));
   root.rotation.set(-inspection*.18-lower*.8-(pose.wall??0)*.2,inspection*.55,inspection*.22+(id==='knife'?Math.sin(shot*Math.PI)*(pose.reduced?.15:.85):0));
   mag.position.copy(magRest);support.position.copy(handRest);root.userData.boltReach=0;bolt.position.z=id==='rifle'?.09:0;
   if(reloading){

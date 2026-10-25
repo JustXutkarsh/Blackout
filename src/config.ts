@@ -1,11 +1,15 @@
 export const CONFIG = {
   matchSeconds: 480, targetScore: 40, maxHealth: 100, respawnSeconds: 3, protectionSeconds: 2,
+  falls: { safeMetres: 3, lethalMetres: 10, killY: -30, penetrationGrace: .75 },
   animation: { turnSpeed: 6, blendSeconds: .16, sprintExit: .15, distantHz: 15, nearDistance: 24 },
+  aimAssist: { cone: 2.6*Math.PI/180, range: 38, reduction: .18, smoothing: 12, querySeconds: .05 },
+  hitEffects: { particles: 64, perHit: 9, seconds: .28, size: .085, reactionInterval: .3 },
+  rifleSight: .185, pistolSight: .103,
   reloadEvents: { remove: .2, insert: .68, bolt: .84 },
   healing: { delay: 5, perSecond: 5 },
   intel: { pingSeconds: 1.5, audibleRadius: 34 },
   render: { highDpr: 1.25, lowDpr: 1, highPixels: 1_800_000, lowPixels: 1_200_000 },
-  view: { fov: 80, adsFov: 62, adsSensitivity: .6, adsSpeed: .62, transition: 12, switchSeconds: .24 },
+  view: { fov: 80, adsFov: 72, pistolAdsFov: 74, adsSensitivity: .6, adsSpeed: .62, transition: 12, switchSeconds: .24 },
   player: { radius: .32, height: 1.75, eye: 1.57, crouchHeight: 1.12, crouchEye: .98, crouchSpeed: .55, speed: 5.2, sprint: 8, jump: 7, gravity: 21, acceleration: 28, braking: 22 },
   stance: { crouchSeconds: .28, proneSeconds: .65, cooldown: .12, front: .82, rear: .85, radius: .28, supportTolerance: .1, headForward: .68, height: .55, eye: .38, speed: .24, spread: .65, crouchSpread: .8 },
   bots: { easy: { reaction: .65, spread: .09, sight: 35, speed: 3.2, aggression: .5 }, normal: { reaction: .38, spread: .052, sight: 40, speed: 3.7, aggression: .78 } },
@@ -17,8 +21,8 @@ export const CONFIG = {
 } as const;
 export type WeaponId = keyof typeof CONFIG.weapons;
 export type Difficulty = keyof typeof CONFIG.bots;
-export type Settings = { sensitivity: number; adsSensitivity: number; autoReload:boolean; volume: number; quality: 'low' | 'high'; reduced: boolean };
-export const DEFAULT_SETTINGS: Settings = { sensitivity: 1, adsSensitivity:.6, autoReload:true, volume: .45, quality: 'high', reduced: false };
+export type Settings = { sensitivity: number; adsSensitivity: number; autoReload:boolean; aimAssist:'off'|'light'; blood:boolean; volume: number; quality: 'low' | 'high'; reduced: boolean };
+export const DEFAULT_SETTINGS: Settings = { sensitivity: 1, adsSensitivity:.6, autoReload:true, aimAssist:'light', blood:true, volume: .45, quality: 'high', reduced: false };
 export function loadSettings(): Settings {
-  try { const s = JSON.parse(localStorage.getItem('blackout.settings') || '{}'); return { autoReload:s.autoReload!==false, adsSensitivity:Math.max(.2,Math.min(1,Number(s.adsSensitivity)||.6)), sensitivity: Math.max(.2, Math.min(2.5, Number(s.sensitivity) || 1)), volume: typeof s.volume === 'number' ? Math.max(0, Math.min(1, s.volume)) : .45, quality: s.quality === 'low' ? 'low' : 'high', reduced: s.reduced === true }; } catch { return { ...DEFAULT_SETTINGS }; }
+  try { const s = JSON.parse(localStorage.getItem('blackout.settings') || '{}'); return { aimAssist:s.aimAssist==='off'?'off':'light', blood:s.blood!==false, autoReload:s.autoReload!==false, adsSensitivity:Math.max(.2,Math.min(1,Number(s.adsSensitivity)||.6)), sensitivity: Math.max(.2, Math.min(2.5, Number(s.sensitivity) || 1)), volume: typeof s.volume === 'number' ? Math.max(0, Math.min(1, s.volume)) : .45, quality: s.quality === 'low' ? 'low' : 'high', reduced: s.reduced === true }; } catch { return { ...DEFAULT_SETTINGS }; }
 }
