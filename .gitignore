@@ -5,3 +5,8 @@ dist-server/
 .env
 .env.local
 .env.production
+
+.env.test
+.data/
+supabase/.temp/
+supabase/.branches/

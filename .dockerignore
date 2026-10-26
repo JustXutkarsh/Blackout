@@ -4,3 +4,6 @@ dist-server
 .git
 .env*
 docs
+
+.data
+supabase

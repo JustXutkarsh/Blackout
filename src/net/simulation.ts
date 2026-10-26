@@ -7,7 +7,7 @@ import {NET,neutral,type Input,type ActorWire,type NetEvent} from './protocol';
 import map from './world-data.json';
 export {map};
 let mapHash=2166136261;for(const char of JSON.stringify(map))mapHash=Math.imul(mapHash^char.charCodeAt(0),16777619)>>>0;
-export const MAP_VERSION=`village-${mapHash.toString(16)}-protocol1`;
+export const MAP_VERSION=`village-${mapHash.toString(16)}-protocol2`;
 export function mapPhysics(){const p=new Physics();p.boxes=map.boxes.map(b=>new Box3(new Vector3(...b.slice(0,3) as [number,number,number]),new Vector3(...b.slice(3) as [number,number,number])));p.ramps=map.ramps;p.surfaces=map.surfaces;return p;}
 export function mapNavigation(p:Physics){const n=Object.create(Navigation.prototype) as Navigation;Object.assign(n,{physics:p,nodes:map.nodes.map(v=>new Vector3().fromArray(v)),edges:map.edges,anchorIds:new Int32Array(8),anchorCosts:new Float64Array(8)});return n;}
 export class NetActor {

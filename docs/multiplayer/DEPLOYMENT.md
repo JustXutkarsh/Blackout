@@ -4,6 +4,8 @@ The browser is a Vite static build. The authoritative server is a separate persi
 
 No infrastructure was provisioned and no public game deployment was published by this upgrade. Public friend-to-friend play requires completing the hosting step below.
 
+Account-backed setup and migrations: [ACCOUNTS.md](ACCOUNTS.md). Offline requires no backend.
+
 ## Local development (Node 24+)
 
 ```sh
@@ -13,7 +15,7 @@ npm run dev:all
 
 Frontend: `http://127.0.0.1:5173`. Server: `ws://127.0.0.1:3001/ws`. Health: `http://127.0.0.1:3001/health`.
 
-Separate terminals: `npm run dev` and `npm run server:dev`. Open two separate tabs/windows, create a room in one and join by code or invite in the other. These are separate sessions, not separate human testers. To test with different computers on a trusted LAN, bind both services to the LAN interface, allow the exact frontend origin on the server, and set the frontend public WebSocket URL to that reachable machine. Loopback URLs work only on the same computer.
+Separate terminals: `npm run dev:client` and `npm run server:dev`. Open two separate tabs/windows, create a room in one and join by code or invite in the other. These are separate sessions, not separate human testers. To test with different computers on a trusted LAN, bind both services to the LAN interface, allow the exact frontend origin on the server, and set the frontend public WebSocket URL to that reachable machine. Loopback URLs work only on the same computer.
 
 ## Production
 
@@ -24,17 +26,17 @@ NODE_ENV=production HOST=127.0.0.1 PORT=3001 \
   ALLOWED_ORIGINS=https://game.example.com npm run server:start
 ```
 
-Build the frontend with `VITE_MULTIPLAYER_URL=wss://multiplayer.example.com/ws`. This value is public configuration, never a secret. HTTPS frontends require WSS. A missing production URL defaults to `/ws` on the frontend host, useful only when a real reverse proxy routes it to this service. No fake successful connection is shown.
+Build the frontend with `VITE_MULTIPLAYER_URL=wss://multiplayer.example.com/ws`. This value is public configuration, never a secret. HTTPS frontends require WSS. A missing production URL explicitly disables online connectivity; development uses the Vite `/ws` proxy. No fake successful connection is shown.
 
 Copy `.env.example` to an ignored `.env` locally. `server:start` and `server:dev` load it. Vite reads its own `.env` files. Production requires an explicit comma-separated `ALLOWED_ORIGINS`; do not use `*`. TLS should terminate at a maintained reverse proxy (example: `server/Caddyfile.example`). Pass HTTP Upgrade headers, permit persistent connections, and use a proxy idle timeout longer than the 10-second heartbeat interval.
 
-`Dockerfile.server` builds a non-root Node 24 image and exposes port 3001. Supply `ALLOWED_ORIGINS` at runtime. Bind published container ports to loopback when a host reverse proxy handles TLS. The health check is `/health`. No credentials or session tokens are logged. SIGTERM/SIGINT stop simulation, notify connected clients, close sockets and stop HTTP.
+`Dockerfile.server` builds a non-root Node 24 image and exposes port 3001. Supply `ALLOWED_ORIGINS`, `SUPABASE_URL`, and server-only `SUPABASE_SECRET_KEY` at runtime; mount `/app/data` for the result outbox. Bind published container ports to loopback when a host reverse proxy handles TLS. The health check is `/health`. No credentials or session tokens are logged. SIGTERM/SIGINT stop simulation, notify connected clients, close sockets and stop HTTP.
 
-One process owns its rooms in memory. **Active rooms and sessions do not survive restart.** Use one instance or sticky routing to the owning instance; arbitrary load balancing across independent servers will not work. Shared state/migration would be a separate project. Health is readiness for this process, not proof of a public TLS deployment.
+One process owns its rooms in memory. **Active rooms and sessions do not survive restart.** Use one instance or sticky routing to the owning instance; arbitrary load balancing across independent servers will not work. Shared state/migration would be a separate project. `/health` is liveness; `/ready` also verifies the account database and result outbox. Neither proves public TLS connectivity.
 
 ## Lifecycle and fairness
 
-- Explicit lobby → three-second countdown → playing → finished → rematch or lobby. Rooms are unlisted, invite-based, not access-controlled accounts. Anyone with the 40-bit code/link can request a lobby slot.
+- Explicit lobby → three-second countdown → playing → finished → rematch or lobby. Rooms are unlisted and require a verified account with a profile. Anyone signed in with the 40-bit code/link can request a lobby slot. Recipient-bound friend invitations are also supported.
 - Server-generated UUID identities and 256-bit reconnection secrets. Names are presentation only. Tokens stay in per-tab session storage, never invite links or logs. Refresh presents an explicit reconnect action.
 - Disconnect reserves the slot for 30 seconds; held input is cleared immediately, and input silence times out after 250ms. Reconnect preserves the same actor, HP, ammunition, statistics, and generation.
 - Host role transfers to a connected human; it controls lobby settings, never simulation. A whole team with no remaining/reserved participants forfeits after grace. Deliberate Leave gives up that slot immediately. Earned scores remain in the finished scoreboard.

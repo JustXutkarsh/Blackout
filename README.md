@@ -1,6 +1,6 @@
 # BLACKOUT: Mountain Turf — Version 2
 
-An offline and private online team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Locally bundled CC0 skinned crew models and authored animation clips are combined with original clothing/weapon details, signs, mountains, audio and PBR materials. Private online 1v1/2v2/4v4 uses a separate authoritative Node/WebSocket server. No accounts, keys, database or remote gameplay assets. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
+An offline and private online team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Locally bundled CC0 skinned crew models and authored animation clips are combined with original clothing/weapon details, signs, mountains, audio and PBR materials. Private online 1v1/2v2/4v4 uses a separate authoritative Node/WebSocket server. Offline play needs no account. Online play uses Supabase Auth/Postgres profiles and a separate authenticated game server; gameplay assets remain locally bundled. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
 
 ## Run
 
@@ -25,7 +25,7 @@ npm test
 ## Private online rooms
 
 ```sh
-npm run dev:all       # frontend + authoritative server
+npm run dev           # frontend + authoritative server (accounts need local setup below)
 npm run test:network  # independent real-socket integration checks
 npm run server:build
 npm run server:start
@@ -33,7 +33,7 @@ npm run server:start
 
 Create Room → choose 1v1 / 2v2 / 4v4 → copy invite/code → friends join → choose teams → all Ready → host starts. Bot fill is off by default and always labeled. Default targets are 20/30/40 with eight minutes. Hold RMB / X toggle: Aim. Online pause releases controls; the match continues. Reconnect preserves the original slot/state for 30 seconds. Results support shared rematch readiness and host return to lobby.
 
-Open separate browser windows/tabs at the local URL to test multiple independent sessions on this machine. Friends on other computers need a reachable server, not a loopback invite. Frontend and persistent server hosting are separate; no public game deployment has been published by this upgrade. See [deployment, security, protocol and limitations](docs/multiplayer/DEPLOYMENT.md) and [observed verification](docs/multiplayer/REPORT.md). `VITE_MULTIPLAYER_URL` is public frontend configuration; `.env.example` contains placeholders/local defaults only. Server `/health` reports process health. Rooms are in memory and do **not** survive a server restart.
+Open separate browser windows/tabs at the local URL to test multiple independent sessions on this machine. Friends on other computers need a reachable server, not a loopback invite. Frontend and persistent server hosting are separate; no public game deployment has been published by this upgrade. See [account/database setup, friends and deployment](docs/multiplayer/ACCOUNTS.md), [deployment, security, protocol and limitations](docs/multiplayer/DEPLOYMENT.md) and [observed verification](docs/multiplayer/REPORT.md). `VITE_MULTIPLAYER_URL` is public frontend configuration; `.env.example` contains placeholders/local defaults only. Server `/health` reports process health. Rooms are in memory and do **not** survive a server restart.
 
 ## Controls
 
