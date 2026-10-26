@@ -1,0 +1,58 @@
+
+> blackout-mountain-turf@2.0.0 test:network
+> node --import tsx --test tests/network.integration.ts
+
+{
+  "environment": {
+    "node": "v25.3.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "formats": [
+    {
+      "size": 1,
+      "clients": 2,
+      "phase": "playing"
+    },
+    {
+      "size": 2,
+      "clients": 4,
+      "phase": "playing"
+    },
+    {
+      "size": 4,
+      "clients": 8,
+      "phase": "playing"
+    }
+  ],
+  "checks": [
+    "Both independently controlled clients physically walked from opposite spawns to the market",
+    "1v1 completed by authoritative bullet damage and score limit, not a timer fixture",
+    "Reconnect preserved original slot, health and ammo; host transferred",
+    "Simulated 20–53ms input delay/jitter; stale movement cleared after silence",
+    "2v2 filled with 4 independent socket sessions; stance replicated",
+    "4v4 filled with 8 independent socket sessions; stance replicated",
+    "Oversized payload closed, invalid room rejected, unapproved Origin rejected"
+  ],
+  "server": {
+    "ticks": 1560,
+    "totalMs": 170.58684700000111,
+    "maxMs": 1.7857080000001133,
+    "snapshots": 1704,
+    "bytes": 9432758,
+    "maxSnapshot": 9371,
+    "meanTickMs": 0.10935054294871867,
+    "p50TickMs": 0.07762500000001182,
+    "p95TickMs": 0.37520799999998644,
+    "p99TickMs": 0.5689159999999447
+  }
+}
+✔ real independent WebSocket sessions: formats, authoritative 1v1, reconnect, rematch, origin and payload security (1745.763667ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2140.848709

@@ -1,0 +1,266 @@
+PASS eight combatants, correct teams, daylight and bounded pools
+PASS all team spawn candidates are supported and outside geometry
+PASS reproduced balcony ramp intrusion cannot lower the eye below the body
+PASS expanded ground footprint is exactly 20 percent larger and market cover matches navigation/map data
+PASS opposing spawn areas have no direct clear sightline
+PASS three routes, accessible room, balcony and warehouse deck connect
+PASS every navigation edge passes the same physical movement solver
+PASS bot follows physical routes through village, terrace and warehouse ramps
+PASS friendly fire blocked; rifle body, headshot and attribution agree
+PASS walls block firearm and melee; nearby barrel cannot peek through cover
+PASS knife deals 50, cooldown holds and attacking ends shield
+PASS ADS narrows FOV, slows movement and knife / sprint cancel aiming
+PASS nearby cover lowers the weapon and prevents ADS, including pitched aim
+PASS crouch changes physical height and cannot stand into low deck ceiling
+PASS C Z Space sprint and ADS share stance state; standing request does not jump
+PASS stance transition blocks attacks; prone uses low head/torso hitboxes
+PASS both firearms align ADS sights in standing crouched and prone poses
+PASS reload and stance timelines freeze together and switching or death cannot duplicate ammo
+PASS automatic reload resolves the last rifle shot then resumes held automatic fire once valid
+PASS pistol needs a fresh press after auto reload; focus loss clears held attack
+PASS auto reload can be disabled, does not switch empty weapons and handles sprint exit and partial reserve
+PASS auto reload overlay pause switching and death retain a single ammunition timeline
+PASS skinned actors and first person arms have independent skeletons and reused roots on reset
+PASS reload visible magazine follows insertion event; interruption preserves ammunition
+PASS switch lock cannot bypass weapon cooldown or accept attacks early
+PASS player and bot healing, interruption, death, respawn and alive HUD
+PASS respawn candidates avoid living actors and remain on the same team side
+PASS enemy shot pings are approximate static snapshots and knife creates none
+PASS M map and held Tab reset inputs, suppress attack and retain active simulation mode
+PASS paused interactive map returns to paused state; focus loss clears held inputs
+PASS bots target only enemies and do not see through warehouse walls
+SIMULATION {"mode":"paused","elapsed":90.00000000001769,"outcome":null,"scores":{"blue":9,"orange":13},"alive":{"blue":4,"orange":2},"overlay":"none","ads":0,"actors":[{"id":0,"name":"YOU","team":"blue","health":100,"kills":0,"deaths":1,"pos":[8,0,23],"state":"PATROL","ammo":30,"reserve":120,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":0},{"id":1,"name":"TASHI","team":"blue","health":100,"kills":5,"deaths":5,"pos":[-0.08195127002647033,0.015000000000000013,9.081313736251488],"state":"SEARCH","ammo":23,"reserve":90,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":0},{"id":2,"name":"KITE","team":"blue","health":75,"kills":3,"deaths":4,"pos":[21.156583058660903,2,6.00092802689356],"state":"SEARCH","ammo":24,"reserve":90,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":5},{"id":3,"name":"ROOK","team":"blue","health":100,"kills":1,"deaths":3,"pos":[-3.3109455522489952,0.015000000000000013,13.789406068158321],"state":"SEARCH","ammo":30,"reserve":120,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":4},{"id":4,"name":"VEX","team":"orange","health":0,"kills":0,"deaths":3,"pos":[0.931037932846003,0.015000000000000013,9.973741005645067],"state":"ENGAGE","ammo":20,"reserve":91,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":17},{"id":5,"name":"NYX","team":"orange","health":0,"kills":4,"deaths":2,"pos":[21.142708104628923,2,0.16267115234757654],"state":"RELOAD / COVER","ammo":30,"reserve":90,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":5},{"id":6,"name":"ASH","team":"orange","health":36.875000000000945,"kills":3,"deaths":2,"pos":[-23.338913679154075,0,-22.499999872014744],"state":"ADVANCE","ammo":24,"reserve":120,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":5},{"id":7,"name":"FLINT","team":"orange","health":100,"kills":6,"deaths":2,"pos":[-2.577039138534856,0.015000000000000013,-11.581062979998052],"state":"ADVANCE","ammo":30,"reserve":120,"reloading":0,"protection":0,"stance":"standing","height":1.75,"path":4}],"frameStats":{"frames":0,"totalMs":0,"maxMs":0,"over33ms":0},"aimAssist":{"target":-1,"angle":null,"visible":false,"factor":1},"zoneVisits":{"SNOWLINE CAMP":30,"RIDGEBACK CAMP":17,"CO-OP COURTYARD":19,"KORA WAREHOUSE":9,"CO-OP LOADING":5,"CEDAR COURT":6,"TERRACED HILLSIDE":10,"PASS REPAIR":3,"JUNIPER COURT":9,"NIMA FRUIT LANE":6,"VILLAGE STREET":2},"navNodes":1245,"navEdges":7490,"pings":0,"assets":{"started":82.09999999403954,"finished":1109.0999999940395,"loaded":15,"total":15,"failed":[]},"characters":{"state":"ready","loadMs":793.5,"error":""},"memory":{"geometries":520,"textures":77},"programs":47,"renderer":{"frame":47,"calls":379,"triangles":205946,"points":64,"lines":57},"frameMs":238.99}
+PASS eight actors advance and score in a bounded 90-second simulation
+PASS score limit and time-limit draw create end scoreboard from authoritative statistics
+PASS a complete accelerated match reaches a legitimate score or time limit
+PASS invalid positions use environmental death, never an alive recovery teleport
+PASS reload events survive pause, sprint and death without duplicated ammo
+PASS three complete restarts preserve resource counts, actors, effects and RAF
+
+RESULT 37 passed / 0 failed
+{
+  "mode": "paused",
+  "elapsed": 0,
+  "outcome": null,
+  "scores": {
+    "blue": 0,
+    "orange": 0
+  },
+  "alive": {
+    "blue": 4,
+    "orange": 4
+  },
+  "overlay": "none",
+  "ads": 0,
+  "actors": [
+    {
+      "id": 0,
+      "name": "YOU",
+      "team": "blue",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        -8,
+        0,
+        20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 1,
+      "name": "TASHI",
+      "team": "blue",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        -4,
+        0,
+        20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 2,
+      "name": "KITE",
+      "team": "blue",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        0,
+        0,
+        20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 3,
+      "name": "ROOK",
+      "team": "blue",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        4,
+        0,
+        20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 4,
+      "name": "VEX",
+      "team": "orange",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        -8,
+        0,
+        -20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 5,
+      "name": "NYX",
+      "team": "orange",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        -4,
+        0,
+        -20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 6,
+      "name": "ASH",
+      "team": "orange",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        0,
+        0,
+        -20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 7,
+      "name": "FLINT",
+      "team": "orange",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        4,
+        0,
+        -20.5
+      ],
+      "state": "PATROL",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 2,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    }
+  ],
+  "frameStats": {
+    "frames": 0,
+    "totalMs": 0,
+    "maxMs": 0,
+    "over33ms": 0
+  },
+  "aimAssist": {
+    "target": -1,
+    "angle": null,
+    "visible": false,
+    "factor": 1
+  },
+  "zoneVisits": {},
+  "navNodes": 1245,
+  "navEdges": 7490,
+  "pings": 0,
+  "assets": {
+    "started": 82.09999999403954,
+    "finished": 1109.0999999940395,
+    "loaded": 15,
+    "total": 15,
+    "failed": []
+  },
+  "characters": {
+    "state": "ready",
+    "loadMs": 793.5,
+    "error": ""
+  },
+  "memory": {
+    "geometries": 595,
+    "textures": 77
+  },
+  "programs": 47,
+  "renderer": {
+    "frame": 50,
+    "calls": 1038,
+    "triangles": 502192,
+    "points": 320,
+    "lines": 401
+  },
+  "frameMs": 256.6636363636364
+}

@@ -1,0 +1,23 @@
+import type {WeaponId} from '../config';
+import type {Team,Outcome} from '../rules';
+import type {StanceKind} from '../stance';
+export const NET={version:1,tick:60,snapshot:20,reconnectMs:30_000,inputTimeoutMs:250,bufferMs:100,maxQueue:8,maxMessage:4096,maxRooms:64} as const;
+export type Phase='lobby'|'countdown'|'playing'|'finished'|'closed';
+export type RoomSettings={size:1|2|4;scoreLimit:number;seconds:number;botFill:boolean;aimAssist:'off'|'light'};
+export const defaults=(size:1|2|4):RoomSettings=>({size,scoreLimit:size===1?20:size===2?30:40,seconds:480,botFill:false,aimAssist:'light'});
+export type Input={seq:number;epoch?:number;x:number;z:number;yaw:number;pitch:number;fire:boolean;press:boolean;ads:boolean;sprint:boolean;jump:boolean;reload:boolean;stance?:StanceKind;weapon?:WeaponId;autoReload:boolean};
+export const neutral=(seq=0):Input=>({seq,x:0,z:0,yaw:0,pitch:0,fire:false,press:false,ads:false,sprint:false,jump:false,reload:false,autoReload:true});
+export type WeaponWire={mag:number;reserve:number;cooldown:number;reloadLeft:number;reloadEmpty:boolean;transferred:boolean;autoWait:number};
+export type ActorWire={id:string;slot:number;name:string;team:Team;bot:boolean;connected:boolean;pos:number[];vel:number[];yaw:number;pitch:number;grounded:boolean;health:number;dead:number;protection:number;kills:number;deaths:number;shots:number;hits:number;sinceDamage:number;active:WeaponId;weapons:Record<WeaponId,WeaponWire>;stance:Record<string,number|string>;switchLeft:number;ads:number;sprint:boolean;ack:number;generation:number;lastKiller:string};
+export type Roster={id:string;name:string;team:Team;ready:boolean;connected:boolean;bot:boolean};
+export type RoomWire={code:string;host:string;phase:Phase;settings:RoomSettings;players:Roster[];countdown:number;outcome:Outcome|null;reason:string};
+export type NetEvent={id:number;kind:'shot'|'hit'|'kill'|'reload'|'respawn'|'environment';actor:string;target?:string;point?:number[];origin?:number[];direction?:number[];head?:boolean;world?:boolean;weapon?:WeaponId;part?:number;name?:string};
+export type ClientMessage={type:'hello';version:number;name:string;create?:RoomSettings;code?:string;token?:string}|{type:'input';input:Input}|{type:'ready';ready:boolean}|{type:'team';team:Team}|{type:'settings';settings:RoomSettings}|{type:'kick';id:string}|{type:'start'|'leave'|'lobby'|'rematch'}|{type:'ping';nonce:number};
+export type ServerMessage={type:'welcome';id:string;token:string;room:RoomWire;mapVersion:string}|{type:'room';room:RoomWire}|{type:'snapshot';tick:number;time:number;elapsed:number;actors:ActorWire[];events:NetEvent[];pickups:number[];room:RoomWire}|{type:'error';code:string;message:string;fatal?:boolean}|{type:'pong';nonce:number;time:number};
+const obj=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
+const bool=(v:unknown)=>typeof v==='boolean';
+export function validSettings(s:unknown):s is RoomSettings{return obj(s)&&[1,2,4].includes(Number(s.size))&&Number.isInteger(s.size)&&Number.isInteger(s.scoreLimit)&&Number(s.scoreLimit)>=1&&Number(s.scoreLimit)<=100&&Number.isInteger(s.seconds)&&Number(s.seconds)>=30&&Number(s.seconds)<=1200&&bool(s.botFill)&&['off','light'].includes(String(s.aimAssist));}
+export function validInput(i:unknown):i is Input{return obj(i)&&Object.keys(i).every(k=>['seq','epoch','x','z','yaw','pitch','fire','press','ads','sprint','jump','reload','stance','weapon','autoReload'].includes(k))&&Number.isSafeInteger(i.seq)&&Number(i.seq)>=0&&Number(i.seq)<2**31&&(i.epoch===undefined||(Number.isSafeInteger(i.epoch)&&Number(i.epoch)>=0))&&['x','z','yaw','pitch'].every(k=>typeof i[k]==='number'&&Number.isFinite(i[k]))&&Math.abs(Number(i.x))<=1&&Math.abs(Number(i.z))<=1&&Math.abs(Number(i.yaw))<=Math.PI*2&&Math.abs(Number(i.pitch))<=1.45&&['fire','press','ads','sprint','jump','reload','autoReload'].every(k=>bool(i[k]))&&(i.stance===undefined||['standing','crouched','prone'].includes(String(i.stance)))&&(i.weapon===undefined||['rifle','pistol','knife'].includes(String(i.weapon)));}
+export function validName(n:unknown):n is string{return typeof n==='string'&&n.trim().length>=1&&n.trim().length<=20&&!/[<>\x00-\x1f\x7f]/.test(n);}
+export function roomCode(value:string){try{const url=new URL(value);return (url.searchParams.get('room')||'').toUpperCase();}catch{return value.trim().toUpperCase();}}
+export const escapeHTML=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));

@@ -1,0 +1,52 @@
+{
+  "quality": "low",
+  "seconds": 20,
+  "viewport": [
+    1280,
+    720
+  ],
+  "dpr": 1,
+  "frames": 1194,
+  "frame": {
+    "mean": 16.76482412060302,
+    "p50": 16.69999999999709,
+    "p95": 17.60000000000582,
+    "p99": 17.80000000000291,
+    "max": 33.69999999999709
+  },
+  "simulation": {
+    "mean": 0.2527638190929814,
+    "p50": 0.20000000298023224,
+    "p95": 0.8999999910593033,
+    "p99": 1.0999999940395355,
+    "max": 1.3999999910593033
+  },
+  "renderCPU": {
+    "mean": 4.994807370031999,
+    "p50": 5.399999991059303,
+    "p95": 8,
+    "p99": 8.899999991059303,
+    "max": 10.5
+  },
+  "over33": 5,
+  "renderer": {
+    "frame": 8268,
+    "calls": 191,
+    "triangles": 63894,
+    "points": 64,
+    "lines": 56
+  },
+  "resources": {
+    "geometries": 620,
+    "textures": 81
+  },
+  "network": {
+    "corrections": 2,
+    "maxCorrection": 0.08336177836592285,
+    "snapshotBytes": 3751764,
+    "snapshots": 1431,
+    "predictedShots": 6
+  },
+  "ping": 0.5,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+}

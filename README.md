@@ -1,17 +1,17 @@
 # BLACKOUT: Mountain Turf — Version 2
 
-An offline 4v4 team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Locally bundled CC0 skinned crew models and authored animation clips are combined with original clothing/weapon details, signs, mountains, audio and PBR materials. No backend, accounts, keys, networking or remote gameplay assets. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
+An offline and private online team deathmatch FPS in an original, bright Himalayan village. Blue is the human plus three bots; Orange is four bots. Locally bundled CC0 skinned crew models and authored animation clips are combined with original clothing/weapon details, signs, mountains, audio and PBR materials. Private online 1v1/2v2/4v4 uses a separate authoritative Node/WebSocket server. No accounts, keys, database or remote gameplay assets. The forced blackout/scanner mode has been replaced with daylight team combat and temporary gunfire intel.
 
 ## Run
 
-Use Node.js 20.19+ or 22.12+ and a desktop browser supporting WebGL 2, with keyboard and mouse. Chrome supports native pointer lock reliably; embedded previews may reject mouse capture. If capture fails, open the address in a normal desktop browser.
+Use Node.js 24+ and a desktop browser supporting WebGL 2, with keyboard and mouse. Chrome supports native pointer lock reliably; embedded previews may reject mouse capture. If capture fails, open the address in a normal desktop browser.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the printed local URL (normally http://127.0.0.1:5173) and click **Join Blue Team**. This explicit click captures the mouse and initializes audio. Installation requires internet; gameplay runs offline afterward.
+Open the printed local URL (normally http://127.0.0.1:5173) and click **Play Offline**. This explicit click captures the mouse and initializes audio. Installation requires internet; gameplay runs offline afterward.
 
 ```sh
 npm run build
@@ -21,6 +21,19 @@ npm test
 ```
 
 `dist/` is a static production build. Serve over HTTP rather than opening `file://`. `package-lock.json` pins dependencies.
+
+## Private online rooms
+
+```sh
+npm run dev:all       # frontend + authoritative server
+npm run test:network  # independent real-socket integration checks
+npm run server:build
+npm run server:start
+```
+
+Create Room → choose 1v1 / 2v2 / 4v4 → copy invite/code → friends join → choose teams → all Ready → host starts. Bot fill is off by default and always labeled. Default targets are 20/30/40 with eight minutes. Hold RMB / X toggle: Aim. Online pause releases controls; the match continues. Reconnect preserves the original slot/state for 30 seconds. Results support shared rematch readiness and host return to lobby.
+
+Open separate browser windows/tabs at the local URL to test multiple independent sessions on this machine. Friends on other computers need a reachable server, not a loopback invite. Frontend and persistent server hosting are separate; no public game deployment has been published by this upgrade. See [deployment, security, protocol and limitations](docs/multiplayer/DEPLOYMENT.md) and [observed verification](docs/multiplayer/REPORT.md). `VITE_MULTIPLAYER_URL` is public frontend configuration; `.env.example` contains placeholders/local defaults only. Server `/health` reports process health. Rooms are in memory and do **not** survive a server restart.
 
 ## Controls
 
@@ -116,7 +129,7 @@ Ramp-side collision now uses the actor radius, and navigation uses that same cor
 Grounded, fully supported positions update the player's last-safe position. Falling out, non-finite/out-of-bounds positions, or persistent solid penetration cause an environmental death with no enemy credit and the regular three-second respawn. Only the dead camera is placed at the validated safe position; failures are not concealed by teleporting a live player. F3 displays collider boxes, ramp top boundaries, actor bounds, feet, camera and grounded/supported state in development. Production omits this module.
 
 
-For future multiplayer, move input commands, collision, hits, ammunition, healing, score and timers to an authoritative server; replicate actor snapshots, interpolate remote actors and add local prediction/reconciliation. Keep the existing rendering and menus on the client. This version deliberately has no network infrastructure.
+Private multiplayer shares the original physics, posture hitboxes and weapon/life rules with a 60Hz authoritative Node server. `src/net/` contains the typed protocol, shared movement, transport, prediction/reconciliation, remote interpolation and room UI. `server/` owns rooms, bots, damage and match lifecycle. Static and persistent-service deployment instructions are in `docs/multiplayer/DEPLOYMENT.md`. Offline remains browser-local and requires no running backend.
 
 ## Attribution
 

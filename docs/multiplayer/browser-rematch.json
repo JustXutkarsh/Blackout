@@ -1,0 +1,19 @@
+{
+  "rematch": "PASS",
+  "sameActors": true,
+  "samePools": true,
+  "counts": {
+    "actors": 2,
+    "shots": 32,
+    "shells": 24,
+    "blood": 64
+  },
+  "resourcesBefore": {
+    "geometries": 620,
+    "textures": 81
+  },
+  "resourcesAfter": {
+    "geometries": 620,
+    "textures": 81
+  }
+}

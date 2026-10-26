@@ -1,7 +1,9 @@
 import './style.css';
 import { Game } from './game';
+import {OnlineGame} from './net/online';
 try {
   const game = new Game();
+  new OnlineGame(game);
   if (import.meta.env.DEV) Object.assign(window, { __BLACKOUT__: game });
   if (import.meta.hot) import.meta.hot.dispose(() => game.dispose());
 } catch (error) {

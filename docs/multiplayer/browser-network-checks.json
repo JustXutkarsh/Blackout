@@ -1,0 +1,62 @@
+{
+  "passed": [
+    "Two real browser WebSocket sessions joined; synchronized countdown; eight-minute-capable match active",
+    "2 actors rendered with independent team rigs",
+    "Client input prediction advanced and reconciled to server snapshots",
+    "Crouch/stand, weapon switching and pistol ADS replicated",
+    "Predicted fire, server ammunition and reload insertion agree",
+    "Map/scoreboard overlays open and close with combat cleared",
+    "Online pause releases controls while server timer continues"
+  ],
+  "online": {
+    "corrections": 1,
+    "maxCorrection": 0.060062699087136906,
+    "snapshotBytes": 461713,
+    "snapshots": 176,
+    "predictedShots": 5
+  },
+  "actors": [
+    {
+      "id": 0,
+      "name": "Browser Blue",
+      "team": "blue",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        -6.005674460690203,
+        0,
+        20.5
+      ],
+      "state": "ONLINE",
+      "ammo": 30,
+      "reserve": 114,
+      "reloading": 0,
+      "protection": 0,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    },
+    {
+      "id": 1,
+      "name": "Browser Orange",
+      "team": "orange",
+      "health": 100,
+      "kills": 0,
+      "deaths": 0,
+      "pos": [
+        8,
+        0,
+        -23
+      ],
+      "state": "ONLINE",
+      "ammo": 30,
+      "reserve": 120,
+      "reloading": 0,
+      "protection": 0,
+      "stance": "standing",
+      "height": 1.75,
+      "path": 0
+    }
+  ]
+}

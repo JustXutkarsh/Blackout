@@ -16,9 +16,9 @@ export class TacticalMap{
   draw(canvas:HTMLCanvasElement,actors:Actor[],pings:Ping[],yaw:number,full=false){
     const w=full?900:256,h=full?650:200; if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
     const key=`${w},${h}`;let background=this.backgrounds.get(key);if(!background){background=document.createElement('canvas');background.width=w;background.height=h;this.base(background.getContext('2d')!,w,h,full);this.backgrounds.set(key,background);}
-    const c=canvas.getContext('2d')!;c.drawImage(background,0,0);
-    for(const ping of pings){const p=worldToMap(ping,this.bounds,w,h);c.beginPath();c.arc(p.x,p.y,full?12:6,0,Math.PI*2);c.fillStyle='#f3a36628';c.fill();c.strokeStyle='#ffb072';c.lineWidth=1.5;c.stroke();}
-    for(const a of actors){if(a.team!=='blue'||a.health<=0)continue;const p=worldToMap(a.pos,this.bounds,w,h);c.save();c.translate(p.x,p.y);if(a.id===0){c.rotate(-yaw);c.beginPath();c.moveTo(0,-(full?10:7));c.lineTo(full?7:5,full?8:5);c.lineTo(0,full?4:2);c.lineTo(full?-7:-5,full?8:5);c.closePath();c.fillStyle='#fff9e7';c.fill();c.strokeStyle='#10222e';c.lineWidth=2;c.stroke();}else{c.beginPath();c.arc(0,0,full?5:3.5,0,Math.PI*2);c.fillStyle='#81c7ed';c.fill();c.strokeStyle='#eef9ff';c.lineWidth=1;c.stroke();}c.restore();}
+    const friendly=actors[0]?.team||'blue',enemyBlue=friendly==='orange';const c=canvas.getContext('2d')!;c.drawImage(background,0,0);
+    for(const ping of pings){const p=worldToMap(ping,this.bounds,w,h);c.beginPath();c.arc(p.x,p.y,full?12:6,0,Math.PI*2);c.fillStyle=enemyBlue?'#81c7ed28':'#f3a36628';c.fill();c.strokeStyle=enemyBlue?'#81c7ed':'#ffb072';c.lineWidth=1.5;c.stroke();}
+    for(const a of actors){if(a.team!==actors[0]?.team||a.health<=0)continue;const p=worldToMap(a.pos,this.bounds,w,h);c.save();c.translate(p.x,p.y);if(a.id===0){c.rotate(-yaw);c.beginPath();c.moveTo(0,-(full?10:7));c.lineTo(full?7:5,full?8:5);c.lineTo(0,full?4:2);c.lineTo(full?-7:-5,full?8:5);c.closePath();c.fillStyle='#fff9e7';c.fill();c.strokeStyle='#10222e';c.lineWidth=2;c.stroke();}else{c.beginPath();c.arc(0,0,full?5:3.5,0,Math.PI*2);c.fillStyle=a.team==='blue'?'#81c7ed':'#edab7b';c.fill();c.strokeStyle='#eef9ff';c.lineWidth=1;c.stroke();}c.restore();}
     c.fillStyle='#c8d4d7';c.font=`bold ${full?13:10}px monospace`;c.fillText('N ↑',w-38,19);
   }
   private base(c:CanvasRenderingContext2D,w:number,h:number,full:boolean){

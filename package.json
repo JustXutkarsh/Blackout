@@ -8,16 +8,25 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "export:world": "esbuild scripts/export-world.ts --bundle --platform=node --format=esm --packages=external --define:import.meta.env.BASE_URL='\"/\"' --outfile=node_modules/.cache/export-world.mjs && node node_modules/.cache/export-world.mjs",
+    "server:dev": "node --import tsx --env-file-if-exists=.env server/index.ts",
+    "server:build": "npm run export:world && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.mjs",
+    "server:start": "node --env-file-if-exists=.env dist-server/index.mjs",
+    "dev:all": "node scripts/dev.mjs",
+    "test:network": "node --import tsx --test tests/network.integration.ts"
   },
   "dependencies": {
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
+    "@types/node": "^24.7.2",
     "@types/three": "^0.180.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.1.9",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
     "tsx": "^4.20.6",
-    "@types/node": "^24.7.2"
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
   }
 }

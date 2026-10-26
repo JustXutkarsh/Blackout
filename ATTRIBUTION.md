@@ -27,3 +27,7 @@ Runtime files are `crew-base.glb`, `crew-motion.glb` and three denim JPEGs, bund
 The tactical upgrade reuses the same locally bundled CC0 assets. Its red-dot optic, ground-level courtyard/loading-area geometry, navy/rust garment palettes and scarf patterns, teammate diamonds, and pooled blood/neutral impact effects are original project geometry/code. No new third-party asset or dependency was added.
 
 The village polish pass rebuilds the compact optic and pistol iron sights from original geometry, reuses the existing licensed PBR maps, and adds original ground-level paving, planters and signage. No new third-party model, texture, sound or dependency was introduced.
+
+## Multiplayer dependencies
+
+No new visual/audio asset was added for multiplayer. Existing locally bundled CC0 crew, animations and PBR maps remain in use. `ws` (websockets contributors, MIT; https://github.com/websockets/ws) provides the Node WebSocket transport. Browser transport is native WebSocket. Original protocol, room simulation, prediction, lobby and batching changes are project code.

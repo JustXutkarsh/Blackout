@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import { surfaceMaterial,disposeSurfaceMaps,contactMaterial, type Finish } from './materials';
 import { Physics, Navigation, type Ramp } from './physics';
 import type { MapFeature } from './tactical-map';
@@ -16,15 +17,20 @@ export class World {
   private mats=new Map<string,T.MeshStandardMaterial>();private roofSheetMats=new Map<number,T.MeshStandardMaterial>(); private cube=new T.BoxGeometry(1,1,1);private barrelGeometry=new T.CylinderGeometry(.42,.42,1.1,10);private bandGeometry=new T.CylinderGeometry(.435,.435,.07,10);private rockGeometry=new T.DodecahedronGeometry(1,0);
   constructor(public scene:T.Scene) {
     scene.background=new T.Color(0x9dcce5);scene.fog=new T.FogExp2(0xb9d5df,.0035);scene.add(this.ambient,this.moon);this.moon.position.set(-30,55,20);
-    this.moon.castShadow=true;this.moon.shadow.mapSize.set(1024,1024);Object.assign(this.moon.shadow.camera,{left:-46,right:36,top:32,bottom:-32,near:1,far:120});this.moon.shadow.bias=-.0015;
+    this.moon.castShadow=true;this.moon.shadow.mapSize.set(1024,1024);Object.assign(this.moon.shadow.camera,{left:-46,right:36,top:32,bottom:-32,near:1,far:120});this.moon.shadow.bias=-.0008;this.moon.shadow.normalBias=.025;
     for(const team of ['blue','orange'] as const)for(const z of [20.5,23])for(const x of [-8,-4,0,4,8])this.teamSpawns[team].push(new T.Vector3(x,0,z*(team==='blue'?1:-1)));
     this.spawnPoints=[...this.teamSpawns.blue,...this.teamSpawns.orange];
-    this.build();this.courtyardDetail();this.villageDetail();buildMarket(this);this.groundCourts();this.batchBoxes();this.nav=new Navigation(this.physics,this.bounds);
+    this.build();this.courtyardDetail();this.villageDetail();buildMarket(this);this.groundCourts();this.batchBoxes();this.batchStaticDetails();this.nav=new Navigation(this.physics,this.bounds);
   }
   private batchBoxes(){
     const groups=new Map<string,T.Mesh[]>();
     for(const o of [...this.scene.children])if(o instanceof T.Mesh&&o.geometry===this.cube){const key=`${o.material.uuid}:${o.castShadow}`;groups.set(key,[...(groups.get(key)||[]),o]);}
     for(const objects of groups.values()){const batch=new T.InstancedMesh(this.cube,objects[0].material,objects.length);batch.castShadow=objects[0].castShadow;batch.receiveShadow=true;objects.forEach((o,i)=>{o.updateMatrix();batch.setMatrixAt(i,o.matrix);this.scene.remove(o);});batch.computeBoundingSphere();this.scene.add(batch);}
+  }
+  private batchStaticDetails(){
+    const groups=new Map<string,T.Mesh[]>();
+    for(const o of [...this.scene.children])if(o instanceof T.Mesh&&!(o instanceof T.InstancedMesh)&&!this.movingCloth.includes(o)&&!Array.isArray(o.material)&&!o.material.transparent){const attributes=Object.keys(o.geometry.attributes).sort().join(',');const key=`${o.material.uuid}:${o.castShadow}:${o.receiveShadow}:${attributes}`;const group=groups.get(key);if(group)group.push(o);else groups.set(key,[o]);}
+    for(const objects of groups.values()){if(objects.length<2)continue;const geometries=objects.map(o=>{o.updateMatrix();return (o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrix);});const merged=mergeGeometries(geometries);for(const g of geometries)g.dispose();if(!merged)continue;const mesh=new T.Mesh(merged,objects[0].material);mesh.castShadow=objects[0].castShadow;mesh.receiveShadow=objects[0].receiveShadow;merged.computeBoundingSphere();for(const o of objects)this.scene.remove(o);this.scene.add(mesh);}
   }
   mat(color:number,emissive=0) {const key=`${color},${emissive}`;if(!this.mats.has(key)){
     const timber=[0x9a7750,0x735c43,0x8d826b,0x8d6950,0x7c6c58,0x7e6044,0x665b4d,0x6e6657,0x7d6b4d];

@@ -1,0 +1,89 @@
+import {randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
+import {performance} from 'node:perf_hooks';
+import {Vector3} from 'three';
+import {NET,defaults,neutral,validInput,validName,validSettings,type ClientMessage,type ServerMessage,type RoomSettings,type RoomWire,type NetEvent,type Input} from '../src/net/protocol';
+import {NetActor,map,mapPhysics,mapNavigation,moveInput,tickWeapons,tickLife,serialize,chooseSpawn,canSee,fire,environment,MAP_VERSION} from '../src/net/simulation';
+import {teamScores,type Team,type Outcome} from '../src/rules';
+export type Peer={send:(m:ServerMessage)=>void;sendEncoded?:(data:string)=>void;close:()=>void;id?:string;key:string;messages:number;window:number;joined?:boolean};
+type Member={actor:NetActor;token:string;peer?:Peer;ready:boolean;expires:number;rematch:boolean;departed?:boolean};
+type Room={code:string;host:string;phase:RoomWire['phase'];settings:RoomSettings;members:Member[];elapsed:number;countdown:number;tick:number;events:NetEvent[];serial:number;outcome:Outcome|null;reason:string;emptySince:number;created:number;pickups:number[];finishedSnapshot?:boolean};
+export class Rooms {
+  rooms=new Map<string,Room>();physics=mapPhysics();nav=mapNavigation(this.physics);clock=0;tick=0;
+  stats={ticks:0,totalMs:0,maxMs:0,snapshots:0,bytes:0,maxSnapshot:0};tickSamples:number[]=[];attempts=new Map<string,{count:number;until:number}>();
+  constructor(public grace:number=NET.reconnectMs){}
+  private sendError(p:Peer,code:string,message:string,fatal=false){p.send({type:'error',code,message,fatal});}
+  private find(p:Peer){for(const r of this.rooms.values()){const m=r.members.find(m=>m.peer===p);if(m)return {r,m};}return undefined;}
+  wire(r:Room):RoomWire{return {code:r.code,host:r.host,phase:r.phase,settings:r.settings,players:r.members.map(m=>({id:m.actor.id,name:m.actor.name,team:m.actor.team,ready:m.ready,connected:!!m.peer||m.actor.bot,bot:m.actor.bot})),countdown:r.countdown,outcome:r.outcome,reason:r.reason};}
+  broadcast(r:Room){const message:ServerMessage={type:'room',room:this.wire(r)};for(const m of r.members)m.peer?.send(message);}
+  receive(p:Peer,value:unknown){
+    if(!value||typeof value!=='object'||Array.isArray(value))return this.sendError(p,'INVALID','Invalid message.');const v=value as ClientMessage;
+    const now=this.clock;if(now-p.window>=1000){p.messages=0;p.window=now;}if(++p.messages>100){p.close();return;}
+    if(v.type==='ping'){if(Number.isFinite(v.nonce))p.send({type:'pong',nonce:v.nonce,time:now});return;}
+    if(v.type==='hello'){if(this.find(p)||p.joined)return this.sendError(p,'ALREADY_JOINED','Already in a room.');
+      const bucket=this.attempts.get(p.key)||{count:0,until:now+60_000};if(bucket.until<now){bucket.count=0;bucket.until=now+60_000;}this.attempts.set(p.key,bucket);if(++bucket.count>20)return this.sendError(p,'RATE_LIMIT','Too many room attempts. Try again in a minute.');
+      if(v.version!==NET.version||!validName(v.name))return this.sendError(p,'INVALID','Use a name of 1–20 plain characters and a current client.');
+      let r:Room|undefined,m:Member|undefined;
+      if(v.token){if(typeof v.token!=='string'||v.token.length!==64||typeof v.code!=='string')return this.sendError(p,'EXPIRED','Session expired.',true);r=this.rooms.get(v.code);m=r?.members.find(m=>m.token.length===v.token!.length&&timingSafeEqual(Buffer.from(m.token),Buffer.from(v.token!)));if(!r||!m||m.actor.bot||m.expires<now)return this.sendError(p,'EXPIRED','Reconnect grace expired or room closed.',true);if(m.peer)return this.sendError(p,'IN_USE','This session is already connected.',true);}
+      else if(v.create){if(!validSettings(v.create))return this.sendError(p,'INVALID','Invalid room settings.');if(this.rooms.size>=NET.maxRooms)return this.sendError(p,'BUSY','Server is full.');let code:string;do{code=randomBytes(5).toString('hex').toUpperCase();}while(this.rooms.has(code));r={code,host:'',phase:'lobby',settings:{...v.create},members:[],elapsed:0,countdown:0,tick:0,events:[],serial:0,outcome:null,reason:'',emptySince:0,created:now,pickups:map.pickups.map(()=>0)};this.rooms.set(code,r);}
+      else {if(typeof v.code!=='string'||!/^[A-F0-9]{10}$/.test(v.code))return this.sendError(p,'INVALID_CODE','Invalid room code.');r=this.rooms.get(v.code);if(!r)return this.sendError(p,'EXPIRED','Room expired or does not exist.');if(r.phase!=='lobby')return this.sendError(p,'STARTED','This match has already started.');}
+      if(!m){if(r!.members.length>=r!.settings.size*2)return this.sendError(p,'FULL','Room is full.');const blue=r!.members.filter(m=>m.actor.team==='blue').length,orange=r!.members.length-blue,team=blue<=orange?'blue':'orange',used=new Set(r!.members.map(m=>m.actor.slot));let slot=0;while(used.has(slot))slot++;const actor=new NetActor(randomUUID(),slot,v.name.trim(),team);m={actor,token:randomBytes(32).toString('hex'),ready:false,expires:Infinity,rematch:false};r!.members.push(m);if(!r!.host)r!.host=actor.id;}
+      if(r!.phase==='finished')r!.finishedSnapshot=false;m.peer=p;m.expires=Infinity;m.actor.connected=true;m.actor.input=neutral(m.actor.ack);m.actor.input.yaw=m.actor.yaw;m.actor.queue=[];m.actor.lastSeq=m.actor.ack;m.actor.lastInput=now;p.id=m.actor.id;p.joined=true;r!.emptySince=0;p.send({type:'welcome',id:m.actor.id,token:m.token,room:this.wire(r!),mapVersion:MAP_VERSION});this.broadcast(r!);return;
+    }
+    const entry=this.find(p);if(!entry)return this.sendError(p,'NO_ROOM','Join a room first.');const {r,m}=entry;
+    switch(v.type){
+      case 'input':{if(!validInput(v.input))return this.sendError(p,'INVALID_INPUT','Invalid input command.');if(r.phase!=='playing')return;const a=m.actor,i=v.input;if(i.epoch!==undefined&&i.epoch!==a.generation)return;if(i.seq<=a.lastSeq)return;a.lastSeq=i.seq;if(a.health<=0)return;if(a.queue.length>=NET.maxQueue)return;a.queue.push(i);a.lastInput=now;return;}
+      case 'leave':m.expires=0;this.remove(r,m);p.joined=false;p.id=undefined;return;
+      case 'ready':if(r.phase==='lobby'&&typeof v.ready==='boolean'){m.ready=v.ready;this.broadcast(r);}return;
+      case 'team':if(r.phase!=='lobby'||!['blue','orange'].includes(v.team))return;if(r.members.filter(n=>n!==m&&n.actor.team===v.team).length>=r.settings.size)return this.sendError(p,'TEAM_FULL','That team is full.');m.actor.team=v.team;m.ready=false;this.broadcast(r);return;
+      case 'settings':if(r.host!==m.actor.id)return this.sendError(p,'HOST_ONLY','Only the lobby host can change rules.');if(r.phase!=='lobby'||!validSettings(v.settings))return this.sendError(p,'INVALID','Settings are locked or invalid.');if(['blue','orange'].some(t=>r.members.filter(n=>n.actor.team===t).length>v.settings.size))return this.sendError(p,'TEAM_FULL','Move players before reducing team size.');r.settings={...v.settings};for(const n of r.members)n.ready=false;this.broadcast(r);return;
+      case 'kick':if(r.phase!=='lobby'||r.host!==m.actor.id)return this.sendError(p,'HOST_ONLY','Only the host can remove players in the lobby.');{const other=r.members.find(n=>n.actor.id===v.id&&n!==m);if(other){if(other.peer)this.sendError(other.peer,'REMOVED','Removed from the lobby.',true);this.remove(r,other);}}return;
+      case 'start':if(r.host!==m.actor.id||r.phase!=='lobby')return this.sendError(p,'HOST_ONLY','Only the host can start a lobby.');if(r.members.some(n=>!n.ready||!n.peer))return this.sendError(p,'NOT_READY','Every human must be connected and ready.');if(!r.settings.botFill&&(['blue','orange'] as const).some(t=>r.members.filter(n=>n.actor.team===t).length!==r.settings.size))return this.sendError(p,'ROSTER','Both teams need their full roster, or enable explicit bot fill.');this.begin(r);return;
+      case 'rematch':if(r.phase!=='finished')return;if(r.members.some(n=>n.departed))return this.sendError(p,'ROSTER','Host must return to lobby to refill departed slots.');m.rematch=true;m.ready=true;if(r.members.filter(n=>!n.actor.bot).every(n=>n.rematch&&n.peer))this.begin(r);else this.broadcast(r);return;
+      case 'lobby':if(r.phase!=='finished'||r.host!==m.actor.id)return this.sendError(p,'HOST_ONLY','Host can return a finished match to lobby.');r.members=r.members.filter(n=>!n.actor.bot&&!n.departed);r.phase='lobby';r.outcome=null;r.events=[];r.reason='';for(const n of r.members){n.ready=false;n.rematch=false;}this.broadcast(r);return;
+      default:this.sendError(p,'INVALID','Unknown or unauthorized message.');
+    }
+  }
+  disconnect(p:Peer){const found=this.find(p);if(!found)return;const {r,m}=found;m.peer=undefined;m.actor.connected=false;m.expires=this.clock+this.grace;m.actor.queue=[];m.actor.input=neutral(m.actor.ack);m.actor.input.yaw=m.actor.yaw;m.ready=false;this.transfer(r);if(!r.members.some(n=>n.peer))r.emptySince=this.clock;this.broadcast(r);}
+  private transfer(r:Room){if(!r.members.some(m=>m.actor.id===r.host&&m.peer))r.host=r.members.find(m=>m.peer)?.actor.id||'';}
+  private remove(r:Room,m:Member){if(r.phase==='playing'){m.departed=true;m.expires=0;m.actor.health=0;m.actor.dead=0;m.actor.connected=false;m.actor.queue=[];m.actor.input=neutral(m.actor.ack);}else r.members=r.members.filter(n=>n!==m);if(m.peer){m.peer.id=undefined;m.peer.joined=false;m.peer.send({type:'room',room:{...this.wire(r),phase:'closed',reason:'You left the room.'}});m.peer=undefined;}this.transfer(r);if(!r.members.some(n=>n.peer))r.emptySince=this.clock;this.broadcast(r);}
+  private begin(r:Room){r.members=r.members.filter(m=>!m.actor.bot&&!m.departed);if(r.settings.botFill)for(const team of ['blue','orange'] as const)while(r.members.filter(m=>m.actor.team===team).length<r.settings.size){const used=new Set(r.members.map(m=>m.actor.slot));let slot=0;while(used.has(slot))slot++;const a=new NetActor(randomUUID(),slot,`BOT ${team==='blue'?'SNOW':'RIDGE'} ${slot+1}`,team);a.bot=true;r.members.push({actor:a,token:'',ready:true,expires:Infinity,rematch:true});}
+    r.phase='countdown';r.finishedSnapshot=false;r.countdown=3;r.elapsed=0;r.outcome=null;r.reason='';r.events=[];r.pickups.fill(0);for(const m of r.members){const a=m.actor;a.kills=a.deaths=a.shots=a.hits=0;a.health=0;}for(const m of r.members){const a=m.actor;a.reset(chooseSpawn(a,r.members.map(m=>m.actor),this.physics)!);a.route=a.slot%3;a.routeIndex=0;a.think=a.slot*.031;a.repath=0;m.rematch=false;m.ready=false;}this.broadcast(r);
+  }
+  private emit(r:Room,event:NetEvent){event.id=++r.serial;r.events.push(event);if(r.events.length>128)r.events.shift();}
+  private finish(r:Room,outcome:Outcome,reason:string){r.phase='finished';r.outcome=outcome;r.reason=reason;for(const m of r.members){m.actor.input=neutral(m.actor.ack);m.actor.queue=[];m.ready=false;m.rematch=false;}this.broadcast(r);}
+  private botInput(a:NetActor,r:Room,dt:number):Input {const actors=r.members.map(m=>m.actor),i=neutral(a.ack+1);i.yaw=a.yaw;i.pitch=a.pitch;a.think-=dt;a.reaction-=dt;a.repath-=dt;if(a.active!=='knife'&&a.weapon.mag===0&&a.weapon.reserve===0&&!a.weapon.reloadLeft&&a.switchLeft<=0)i.weapon=a.active==='rifle'?'pistol':'knife';
+    if(a.think<=0){a.think=.22+(a.slot%3)*.025;let target:NetActor|undefined,best=40;for(const b of actors)if(b.team!==a.team&&b.health>0&&b.protection<=0){const d=a.pos.distanceTo(b.pos);if(d<best&&canSee(a,b,this.physics)){target=b;best=d;}}if(target){if(a.target!==target.id)a.reaction=.5;a.target=target.id;a.memory=target.pos.clone();a.memoryUntil=r.elapsed+4;}else {a.target='';if(r.elapsed>a.memoryUntil)a.memory=undefined;}
+      const route=map.routes[a.route],index=a.team==='blue'?a.routeIndex:route.length-1-a.routeIndex;let goal=a.memory;if(!goal){goal=new Vector3().fromArray(route[index]);if(a.pos.distanceTo(goal)<2){a.routeIndex++;if(a.routeIndex>=route.length){a.routeIndex=0;const occupancy=[0,0,0];for(const b of actors)if(b.bot&&b!==a&&b.team===a.team)occupancy[b.route]++;a.route=occupancy.indexOf(Math.min(...occupancy));}goal=new Vector3().fromArray(map.routes[a.route][a.team==='blue'?a.routeIndex:map.routes[a.route].length-1-a.routeIndex]);}}
+      if(a.repath<=0||!a.path.length){a.path=this.nav.path(a.pos,goal);a.repath=1.2;}if(a.weapon.mag<6&&!a.weapon.reloadLeft&&a.weapon.reserve>0&&!target)i.reload=true;
+    }
+    const target=actors.find(b=>b.id===a.target),attack=target&&target.health>0&&a.reaction<=0&&canSee(a,target,this.physics);
+    while(a.path.length&&a.pos.distanceTo(a.path[0])<.35)a.path.shift();const next=a.path[0];if(next&&(!attack||a.pos.distanceTo(target!.pos)>14)){const dx=next.x-a.pos.x,dz=next.z-a.pos.z,len=Math.hypot(dx,dz);i.yaw=Math.atan2(-dx,-dz);i.z=-.7;if(len<.05)i.z=0;}
+    if(attack){const dx=target!.pos.x-a.pos.x,dz=target!.pos.z-a.pos.z;const wanted=Math.atan2(-dx,-dz),delta=Math.atan2(Math.sin(wanted-a.yaw),Math.cos(wanted-a.yaw));i.yaw=a.yaw+Math.max(-dt*6,Math.min(dt*6,delta));i.pitch=Math.atan2(target!.pos.y+target!.stance.eye-a.pos.y-a.stance.eye,Math.hypot(dx,dz))+(Math.random()-.5)*.045;i.fire=Math.abs(delta)<.12;i.press=i.fire&&a.active!=='rifle';i.ads=true;}
+    i.yaw=Math.atan2(Math.sin(i.yaw),Math.cos(i.yaw));i.pitch=Math.max(-1.45,Math.min(1.45,i.pitch));
+    if(a.pos.distanceToSquared(a.previous)<.00002&&i.z)a.stuck+=dt;else a.stuck=Math.max(0,a.stuck-dt);if(a.stuck>.5){i.x=a.slot%2?1:-1;i.z=-.3;}if(a.stuck>1.5){a.memory=undefined;a.route=(a.route+1)%3;a.routeIndex=0;a.stuck=0;a.think=0;}a.previous.copy(a.pos);if(a.stance.kind!=='standing')i.stance='standing';return i;
+  }
+  step(dt=1/NET.tick,wallMs?:number){const start=performance.now();this.clock=Math.max(this.clock+dt*1000,wallMs??0);this.tick++;
+    for(const [key,b] of this.attempts)if(b.until<this.clock)this.attempts.delete(key);
+    for(const r of this.rooms.values()){
+      for(const m of [...r.members])if(!m.peer&&!m.actor.bot&&!m.departed&&m.expires<=this.clock)this.remove(r,m);
+      if(!r.members.some(m=>m.peer)&&this.clock-r.emptySince>60_000){r.phase='closed';this.rooms.delete(r.code);continue;}
+      if(this.clock-r.created>4*60*60_000){for(const m of r.members)m.peer?.send({type:'error',code:'EXPIRED',message:'Room lifetime expired.',fatal:true});this.rooms.delete(r.code);continue;}
+      r.tick++;
+      if(r.phase==='countdown'){if(r.members.some(m=>!m.actor.bot&&!m.peer)){r.phase='lobby';r.members=r.members.filter(m=>!m.actor.bot);this.broadcast(r);}else {r.countdown=Math.max(0,r.countdown-dt);if(r.countdown===0){r.phase='playing';this.broadcast(r);}}}
+      else if(r.phase==='playing'){
+        // A reserved disconnected team gets the whole grace period; forfeits only after all slots expire.
+        const present=(team:Team)=>r.members.some(m=>m.actor.team===team&&(m.peer||m.actor.bot||m.expires>this.clock));
+        if(!present('blue')||!present('orange')){this.finish(r,present('blue')?'blue':present('orange')?'orange':'draw','Opponent abandoned after reconnect grace.');}
+        else {r.elapsed+=dt;const actors=r.members.map(m=>m.actor);for(const a of actors){if(r.members.find(m=>m.actor===a)?.departed)continue;tickWeapons(a,dt,e=>this.emit(r,e));if(tickLife(a,dt)){const pos=chooseSpawn(a,actors,this.physics);if(pos){a.reset(pos);this.emit(r,{id:0,kind:'respawn',actor:a.id});}else a.dead=.1;}if(a.health<=0)continue;
+            let i:Input;if(a.bot)i=this.botInput(a,r,dt);else {const queued=a.queue.shift();if(queued){a.input=queued;a.ack=queued.seq;}i={...a.input};a.input.press=a.input.jump=a.input.reload=false;delete a.input.stance;delete a.input.weapon;if(!a.connected||this.clock-a.lastInput>NET.inputTimeoutMs){i=neutral(a.ack);i.yaw=a.yaw;i.pitch=a.pitch;}}
+            if(moveInput(a,i,this.physics,dt)){fire(a,actors,this.physics,e=>{this.emit(r,e);if(e.kind==='shot')for(const b of actors)if(b.bot&&b.team!==a.team&&b.pos.distanceTo(a.pos)<24&&!b.target){b.memory=a.pos.clone();b.memoryUntil=r.elapsed+3;} });}environment(a,this.physics,dt,e=>this.emit(r,e));const immediateScores=teamScores(actors);if(Math.max(immediateScores.blue,immediateScores.orange)>=r.settings.scoreLimit){this.finish(r,immediateScores.blue>immediateScores.orange?'blue':'orange','Score limit');break;}}
+          for(let j=0;j<map.pickups.length;j++){r.pickups[j]=Math.max(0,r.pickups[j]-dt);if(r.pickups[j]>0)continue;const pos=new Vector3().fromArray(map.pickups[j].pos);for(const a of actors)if(a.health>0&&a.pos.distanceToSquared(pos)<1.25){let got=false;for(const id of ['rifle','pistol'] as const){const w=a.weapons[id];if(w.reserve< (id==='rifle'?120:60)){w.reserve=Math.min(id==='rifle'?120:60,w.reserve+(id==='rifle'?60:24));got=true;}}if(got){r.pickups[j]=20;break;}}}
+          const scores=teamScores(actors);if(r.phase==='playing'&&(r.elapsed>=r.settings.seconds||Math.max(scores.blue,scores.orange)>=r.settings.scoreLimit))this.finish(r,scores.blue===scores.orange?'draw':scores.blue>scores.orange?'blue':'orange',r.elapsed>=r.settings.seconds?'Time limit':'Score limit');
+        }
+      }
+      if(this.tick%(NET.tick/NET.snapshot)===0&&r.phase!=='lobby'&&!r.finishedSnapshot&&r.members.some(m=>m.peer)) {const message:ServerMessage={type:'snapshot',tick:r.tick,time:this.clock,elapsed:r.elapsed,actors:r.members.map(m=>serialize(m.actor)),events:r.events.slice(-96),pickups:r.pickups,room:this.wire(r)};const encoded=JSON.stringify(message),bytes=Buffer.byteLength(encoded);this.stats.maxSnapshot=Math.max(this.stats.maxSnapshot,bytes);for(const m of r.members)if(m.peer){if(m.peer.sendEncoded)m.peer.sendEncoded(encoded);else m.peer.send(message);this.stats.bytes+=bytes;this.stats.snapshots++;}r.events=[];if(r.phase==='finished')r.finishedSnapshot=true;}
+    }
+    const ms=performance.now()-start;this.stats.ticks++;this.stats.totalMs+=ms;this.stats.maxMs=Math.max(this.stats.maxMs,ms);this.tickSamples.push(ms);if(this.tickSamples.length>3600)this.tickSamples.shift();
+  }
+  shutdown(){for(const r of this.rooms.values()){r.phase='closed';r.reason='Server restarting; rooms are not persisted.';this.broadcast(r);for(const m of r.members)m.peer?.close();}this.rooms.clear();}
+}

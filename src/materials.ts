@@ -11,7 +11,7 @@ export function contactMaterial(){if(!shadowTexture){const c=document.createElem
 export function surfaceMaterial(kind:Finish,color:number=0xffffff,world=true){
   let textures=maps.get(kind);
   if(!textures){const load=(channel:string)=>{const tex=loader.load(`${import.meta.env.BASE_URL}assets/materials/${ids[kind]}_${channel}.jpg`);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=4;tex.colorSpace=channel==='diff'?T.SRGBColorSpace:T.NoColorSpace;return tex;};textures={map:load('diff'),normalMap:load('nor_gl'),roughnessMap:load('rough')};maps.set(kind,textures);}
-  const material=new T.MeshStandardMaterial({...textures,color,roughness:kind==='metal'?.72:1,metalness:kind==='metal'?.48:0,normalScale:new T.Vector2(kind==='plaster'?.3:.65,kind==='plaster'?.3:.65)});
+  const material=new T.MeshStandardMaterial({...textures,color,roughness:kind==='metal'?.72:1,metalness:kind==='metal'?.48:0,normalScale:new T.Vector2(kind==='plaster'?.22:kind==='timber'?.4:.55,kind==='plaster'?.22:kind==='timber'?.4:.55)});
   if(world){material.onBeforeCompile=shader=>{
     shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>',`#include <uv_vertex>
       vec4 surfacePos=vec4(position,1.0); vec3 surfaceNormal=normal;
@@ -20,7 +20,7 @@ export function surfaceMaterial(kind:Finish,color:number=0xffffff,world=true){
       #endif
       surfacePos=modelMatrix*surfacePos; surfaceNormal=normalize(mat3(modelMatrix)*surfaceNormal);
       vec3 dominant=abs(surfaceNormal); vec2 tiled=dominant.y>0.7?surfacePos.xz:(dominant.x>0.7?surfacePos.zy:surfacePos.xy);
-      tiled*= ${kind==='dirt'?'.5':kind==='timber'?'1.0':'.5'};
+      tiled*= ${kind==='dirt'?'.5':kind==='timber'?'1.0':kind==='stone'?'.8':'.5'};
       vMapUv=tiled;vNormalMapUv=tiled;vRoughnessMapUv=tiled;`);
   };material.customProgramCacheKey=()=>`world-${kind}`;}
   return material;

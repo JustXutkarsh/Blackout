@@ -1,0 +1,4 @@
+# Replace hostname; serve your built static frontend separately.
+multiplayer.example.com {
+  reverse_proxy 127.0.0.1:3001
+}
